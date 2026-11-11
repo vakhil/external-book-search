@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+backups/
+books-list/
+tests/
+bookstore.db-shm
+bookstore.db-wal
+test_bookstore.db
+.git/

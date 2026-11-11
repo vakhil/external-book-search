@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Book Finder">
+  <title>Bookmark - Search, Genres &amp; AI Advisor</title>
+  <link rel="stylesheet" href="/styles.css?v=4.8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Styling refinements specifically tailored for the public search portal */
+    .catalog-badge {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #3b82f6;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 9999px;
+      padding: 0.3rem 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .public-portal-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #059669;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 6px;
+      padding: 0.2rem 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .advisor-summary-card {
+      background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
+      border: 1.5px solid #86efac;
+      border-radius: 12px;
+      padding: 1.25rem 1.4rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Clean, Minimal Header -->
+  <header class="simple-header">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <div class="brand">🔖 Bookmark</div>
+      <span class="public-portal-tag">Book Search &amp; Advisor</span>
+    </div>
+    <div class="header-right-actions" style="display: flex; align-items: center; gap: 0.75rem;">
+      <span class="catalog-badge" id="headerCopiesCount">
+        <span>📚</span> <span id="headerTotalCopies">Loading catalog...</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs: Search, Genre, Advisor -->
+  <nav class="main-tabs simple-nav">
+    <button class="tab-btn active" data-tab="tabSearch">
+      <span class="tab-icon">🔍</span>
+      <span class="tab-label">Search Books</span>
+    </button>
+    <button class="tab-btn" data-tab="tabGenre">
+      <span class="tab-icon">🏷️</span>
+      <span class="tab-label">Browse by Genre</span>
+    </button>
+    <button class="tab-btn" data-tab="tabAdvisor" id="tabBtnAdvisor">
+      <span class="tab-icon">💡</span>
+      <span class="tab-label">AI Advisor</span>
+    </button>
+  </nav>
+
+  <!-- Main Workspaces Container -->
+  <main class="container">
+
+    <!-- ==================== TAB 1: SEARCH ==================== -->
+    <section id="tabSearch" class="tab-pane active">
+      <!-- Search Mode Pills (Book Title [Default], Author) -->
+      <div class="search-mode-bar" id="searchModeBar">
+        <span class="search-mode-label">Search by:</span>
+        <button type="button" class="search-mode-pill active" data-type="title">📖 Book Title</button>
+        <button type="button" class="search-mode-pill" data-type="author">✍️ Author's Name</button>
+      </div>
+
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search by book title (e.g. Awaken the Giant Within)..." autocomplete="off" autofocus>
+        <button type="button" class="btn-voice-search" id="btnVoiceSearch" title="Speak book title or author">
+          <span class="mic-icon">🎙️</span>
+        </button>
+        <button class="btn-clear" id="btnClearSearch" style="display: none;" title="Clear">✕</button>
+      </div>
+
+      <!-- Action Row: Voice Search -->
+      <div class="search-actions-row">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnVoiceSearchAction">
+          🎙️ Speak to Search
+        </button>
+      </div>
+
+      <div id="voiceSearchStatusNotice" style="display:none; margin: 0.25rem 0 0.85rem 0; padding: 0.5rem 0.75rem; background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; font-size: 0.88rem; color: #92400e; font-weight: 500; align-items: center; gap: 0.5rem;">
+        <span class="pulse-mic">🔴</span>
+        <span id="voiceSearchStatusText">Listening... Speak book title or author now</span>
+      </div>
+
+      <!-- Live Search Results -->
+      <div id="searchResultsContainer">
+        <div class="empty-prompt">
+          <div class="prompt-icon">📖</div>
+          <h3>Find Any Book Instantly</h3>
+          <p>Type a book title or author to browse matching books.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: GENRE ==================== -->
+    <section id="tabGenre" class="tab-pane">
+      <div class="clean-card">
+        <div class="card-title-row">
+          <div>
+            <h2>Browse &amp; Collect Books by Genre</h2>
+            <p class="subtitle" style="margin: 0.2rem 0 0; font-size: 0.85rem; color: #64748b;">
+              Explore the bookstore's inventory organized into standard canonical genres. Click any genre or select multiple genres to browse books across categories!
+            </p>
+          </div>
+          <span class="id-tag" id="genreBooksCountBadge">0 Books</span>
+        </div>
+
+        <!-- Multi-Genre Collection Control Bar -->
+        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin: 1rem 0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+            <div style="font-size:0.86rem; font-weight:800; color:#1e293b; text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:0.4rem;">
+              <span>🏷️</span> Common Genres Directory
+              <span id="genreSelectedCountLabel" style="font-size:0.75rem; font-weight:700; background:#e0e7ff; color:#4338ca; border-radius:9999px; padding:0.15rem 0.55rem; margin-left:0.35rem; display:none;">0 selected</span>
+            </div>
+            <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm btn-outline" id="btnSelectAllGenres" style="font-size:0.76rem; font-weight:700; padding:0.3rem 0.65rem; border-radius:6px;">
+                ✓ Select All
+              </button>
+              <button type="button" class="btn btn-sm btn-outline" id="btnClearGenreSelection" style="font-size:0.76rem; font-weight:700; padding:0.3rem 0.65rem; border-radius:6px; color:#ef4444; border-color:#fca5a5;">
+                ✕ Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Genre Pills & Collector Chips -->
+          <div id="quickGenrePills" class="quick-pills-bar" style="display:flex; flex-wrap:wrap; gap:0.45rem; margin-bottom:0.85rem;"></div>
+
+          <!-- Secondary Filters Row (Single select fallback + Text filter) -->
+          <div class="genre-filter-row" style="display:flex; flex-wrap:wrap; gap:0.75rem; align-items:flex-end; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
+            <div style="flex: 1.2; min-width: 220px;">
+              <label for="genreSelect" style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:0.25rem;">OR CHOOSE SINGLE GENRE</label>
+              <select id="genreSelect" class="form-control" style="font-size:0.9rem; font-weight:600; padding:0.55rem 0.75rem; width:100%; border:1px solid #cbd5e1; border-radius:8px; background:#fff;">
+                <option value="">-- Choose a Single Genre --</option>
+              </select>
+            </div>
+
+            <div style="flex: 1; min-width: 200px;">
+              <label for="genreFilterInput" style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:0.25rem;">FILTER WITHIN COLLECTED BOOKS</label>
+              <input type="text" id="genreFilterInput" placeholder="Filter title or author..." style="font-size:0.9rem; padding:0.55rem 0.75rem; width:100%; border:1px solid #cbd5e1; border-radius:8px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Genre Books Results Container -->
+        <div id="genreBooksContainer">
+          <div class="empty-prompt">
+            <div class="prompt-icon">🏷️</div>
+            <h3>Select or Collect Genres Above</h3>
+            <p>Click any common genre pill above (e.g. <b>Fiction</b>, <b>Philosophy</b>, <b>History</b>, <b>Self-Help</b>) to collect and browse all matching books.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: AI ADVISOR ==================== -->
+    <section id="tabAdvisor" class="tab-pane">
+      <div class="clean-card">
+        <div class="card-title-row">
+          <div>
+            <h2>Ask for Book Recommendations</h2>
+            <p class="subtitle" style="margin: 0.2rem 0 0; font-size: 0.85rem; color: #64748b;">
+              Ask natural questions or describe how you are feeling (e.g. <i>"I'm in a bad mood"</i>, <i>"I want philosophical Japanese books"</i>, or <i>"books on resilience"</i>).
+            </p>
+          </div>
+          <span class="catalog-badge" style="background:#eef2ff; color:#4338ca; border-color:#c7d2fe;">✨ Gemini Flash &bull; Instant Synopses</span>
+        </div>
+
+        <div class="advisor-input-box" style="margin: 1rem 0;">
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="advisorQuestionInput" placeholder="Describe your mood, situation, or what you want to read..." style="flex:1; font-size:0.95rem; padding:0.75rem 1rem; border:1px solid #cbd5e1; border-radius:8px;">
+            <button type="button" class="btn btn-primary" id="btnAskAdvisor" style="padding:0.75rem 1.35rem; font-weight:700;">
+              ✨ Ask Advisor
+            </button>
+          </div>
+
+          <!-- Example Question Pills -->
+          <div style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.45rem; align-items:center;">
+            <span style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Try asking:</span>
+            <button type="button" class="example-question-pill" data-q="i'm in a bad mood">🌧️ I'm in a bad mood</button>
+            <button type="button" class="example-question-pill" data-q="i want some philosophical japanese books">🗾 Philosophical Japanese books</button>
+            <button type="button" class="example-question-pill" data-q="books about procrastination and habit formation">⏳ Procrastination & habits</button>
+            <button type="button" class="example-question-pill" data-q="i need books on organizing and simple living">🧹 Organizing & simple living</button>
+            <button type="button" class="example-question-pill" data-q="books on stoicism, peace of mind, and solitude">🕊️ Stoicism & peace of mind</button>
+          </div>
+        </div>
+
+        <!-- AI Advisor Response / Summary Banner -->
+        <div id="advisorSummaryBanner" style="display:none;" class="advisor-summary-card">
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+            <span style="font-size:1.3rem;">💡</span>
+            <h4 id="advisorSummaryTitle" style="margin:0; font-size:1rem; color:#1e293b; font-weight:800;">Advisor Insights</h4>
+          </div>
+          <p id="advisorSummaryText" style="margin:0; font-size:0.92rem; color:#334155; line-height:1.55;"></p>
+        </div>
+
+        <!-- Recommended Books Container -->
+        <div id="advisorResultsContainer">
+          <div class="empty-prompt">
+            <div class="prompt-icon">💡</div>
+            <h3>Looking for Book Recommendations?</h3>
+            <p>Tell the advisor what kind of book you want or select an example above to get instant personalized recommendations from our inventory.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/app.js?v=4.8"></script>
+</body>
+</html>
