@@ -142,24 +142,26 @@ def get_book_summary(title: str, author: str = "", book_id: str = "") -> str:
     # 3. Retrieve baseline summary (from Wikipedia/Google/OpenLibrary)
     base_summary = database.get_or_fetch_book_summary(title=clean_t, author=clean_a, book_id=clean_bid)
 
-    # 4. Generate 300 to 400 word rich hybrid synopsis with Gemini
+    # 4. Generate 150 to 400 word rich hybrid synopsis synthesizing Goodreads, Amazon editorial reviews, and literary overview
     api_key = _get_api_key()
     hybrid_summary = ""
 
     if api_key and clean_t:
         try:
-            prompt = f"""You are an expert literary scholar and bookstore book curator.
+            prompt = f"""You are an expert literary curator and book editor.
 Below is the baseline factual background for "{clean_t}" by {clean_a or 'Unknown Author'}:
 "{base_summary}"
 
 Task:
-Produce a comprehensive, rich 300 to 400 word synopsis of this book combining its core factual foundation with in-depth literary, psychological, and narrative analysis.
-Cover:
-1. Core Premise & Narrative / Conceptual Framework: The main characters, central conflict, or core thesis.
-2. Thematic Depth & Practical Wisdom: Deep themes, mental models, psychological shifts, and insights.
-3. Emotional Resonance & Takeaway: Why readers connect with it, its emotional impact, and who will benefit most.
+Extract and synthesize an engaging, comprehensive synopsis of this book combining the editorial styles found on Goodreads, Amazon, and leading literary publications.
+Length requirement: Strictly between 150 and 400 words (do NOT make it shorter than 150 words).
 
-Write fluently in engaging paragraphs. Target approximately 300 to 400 words."""
+Cover:
+1. Core Premise & Narrative / Conceptual Framework: Central conflict, setting, main characters or core thesis.
+2. Thematic Depth & Key Insights: Deep themes, practical takeaways, or philosophical questions explored.
+3. Emotional Resonance & Reader Appeal: Why readers on Goodreads and Amazon recommend it, its tone, and who should read it.
+
+Write in clear, fluid paragraphs. Ensure the word count is between 150 and 400 words."""
 
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={api_key}"
             payload = {
@@ -171,15 +173,16 @@ Write fluently in engaging paragraphs. Target approximately 300 to 400 words."""
                 data=json.dumps(payload).encode("utf-8"),
                 headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
             )
-            with urllib.request.urlopen(req, timeout=8) as resp:
+            with urllib.request.urlopen(req, timeout=12) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                if len(text.split()) >= 80:
+                word_count = len(text.split())
+                if word_count >= 140:
                     hybrid_summary = text
         except Exception as e:
-            print(f"Notice generating 300-400 word synopsis with Gemini: {e}")
+            print(f"Notice generating 150-400 word synopsis: {e}")
 
-    # Fallback to base summary if Gemini is offline
+    # Fallback to base summary if model is offline
     final_summary = hybrid_summary or base_summary
 
     # 5. Persist to RAM cache and SQLite DB

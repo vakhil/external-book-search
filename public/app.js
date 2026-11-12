@@ -555,7 +555,7 @@ function createBookTile(book, copy, matchType) {
           <strong style="color: #0f172a; display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem;">
             <span>📖</span> In-Depth Synopsis &amp; Analysis
           </strong>
-          <span class="synopsis-badge">✨ 300-400 Words &bull; Gemini Mixed</span>
+          <span class="synopsis-badge">✨ 150–400 Words &bull; Editorial Synopsis</span>
         </div>
         <div class="book-summary-text">${existingSummary ? escapeHtml(existingSummary).replace(/\n\n/g, '<br><br>') : '<em style="color:#64748b;">Loading comprehensive 300-400 word synopsis...</em>'}</div>
       </div>
@@ -866,7 +866,7 @@ function initAdvisorTab() {
       <div class="empty-prompt">
         <div style="font-size:2.2rem; animation: pulse 1.5s infinite;">✨</div>
         <h3 style="margin-top:0.5rem;">Advisor Thinking...</h3>
-        <p>Combining 300-400 word synopses with Gemini AI to craft your personalized recommendations.</p>
+        <p>Analyzing in-depth synopses across our collection to craft your personalized recommendations.</p>
       </div>
     `;
     if (summaryBanner) summaryBanner.style.display = 'none';
