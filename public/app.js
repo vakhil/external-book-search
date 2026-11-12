@@ -168,6 +168,23 @@ function initSearch() {
     }, 120);
   });
 
+  // Enter key trigger
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      clearTimeout(searchDebounceTimer);
+      performSearch(input.value);
+    }
+  });
+
+  // Explicit Search Button trigger
+  const btnSearchExecute = document.getElementById('btnExecuteSearch');
+  if (btnSearchExecute) {
+    btnSearchExecute.addEventListener('click', () => {
+      clearTimeout(searchDebounceTimer);
+      performSearch(input.value);
+    });
+  }
+
   // Clear Search Field
   clearBtn.addEventListener('click', () => {
     input.value = '';
@@ -623,7 +640,6 @@ function createBookTile(book, copy, matchType) {
   });
 
   return card;
-}
 }
 
 function createBookCard(bookGroup, matchType) {
