@@ -238,14 +238,14 @@
       }
     }
 
-    /* Pillar 3: Address & Maps Review Special Accent */
-    .pillar-location {
-      border-color: #fed7aa;
-      background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+    /* Pillar 3: AI Advisor & Browse by Genre */
+    .pillar-advisor {
+      border-color: #fbcfe8;
+      background: linear-gradient(180deg, #ffffff 0%, #fdf2f8 100%);
     }
-    .pillar-location:hover {
-      border-color: #fb923c;
-      box-shadow: 0 20px 40px -8px rgba(249, 115, 22, 0.22);
+    .pillar-advisor:hover {
+      border-color: #f472b6;
+      box-shadow: 0 20px 40px -8px rgba(236, 72, 153, 0.22);
     }
 
     /* Card Top Elements */
@@ -264,6 +264,7 @@
     }
     .badge-green { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     .badge-indigo { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .badge-pink { background: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
     .badge-amber { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
 
     .pillar-icon-circle {
@@ -278,6 +279,7 @@
     }
     .icon-green { background: #dcfce7; color: #16a34a; box-shadow: 0 8px 16px rgba(22, 163, 74, 0.18); }
     .icon-indigo { background: #e0e7ff; color: #4f46e5; box-shadow: 0 8px 16px rgba(79, 70, 229, 0.2); }
+    .icon-pink { background: #fce7f3; color: #db2777; box-shadow: 0 8px 16px rgba(219, 39, 119, 0.2); }
     .icon-amber { background: #ffedd5; color: #ea580c; box-shadow: 0 8px 16px rgba(234, 88, 12, 0.18); }
 
     .pillar-title {
@@ -312,10 +314,10 @@
       border: 1px dashed #a5b4fc;
       color: #3730a3;
     }
-    .box-amber {
-      background: rgba(255, 237, 213, 0.6);
-      border: 1px dashed #fdba74;
-      color: #9a3412;
+    .box-pink {
+      background: rgba(252, 231, 243, 0.6);
+      border: 1px dashed #f472b6;
+      color: #9d174d;
     }
 
     /* Pillar Buttons */
@@ -355,15 +357,27 @@
       transform: translateY(-2px);
       box-shadow: 0 8px 26px rgba(79, 70, 229, 0.55);
     }
-    .btn-maps {
-      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+    .btn-advisor-hero {
+      background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
       color: #ffffff;
-      box-shadow: 0 6px 18px rgba(234, 88, 12, 0.35);
+      box-shadow: 0 6px 18px rgba(219, 39, 119, 0.35);
     }
-    .btn-maps:hover {
-      background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+    .btn-advisor-hero:hover {
+      background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(234, 88, 12, 0.45);
+      box-shadow: 0 8px 24px rgba(219, 39, 119, 0.45);
+    }
+    .btn-genre-hero {
+      background: #ffffff;
+      color: #be185d;
+      border: 1.5px solid #fbcfe8;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    }
+    .btn-genre-hero:hover {
+      background: #fdf2f8;
+      border-color: #f472b6;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(236, 72, 153, 0.2);
     }
 
     /* Search & Exploration Area Header Anchor */
@@ -535,16 +549,16 @@
       <!-- ================= COMPONENT 2: MIDDLE (LIVE SEARCH) ================= -->
       <article class="pillar-card pillar-search">
         <div>
-          <span class="pillar-badge badge-indigo">⚡ Live Inventory &bull; 6,700+ Books</span>
+          <span class="pillar-badge badge-indigo">⚡ Live Inventory &bull; Instant Search</span>
           <div class="pillar-icon-circle icon-indigo">🔍</div>
           <h2 class="pillar-title">Check What Books Are in Our Store</h2>
           <p class="pillar-desc">
-            Want to see all the books our bookstore has right now? Explore <b>6,738 physical copies</b> across 4,550+ titles, complete with 300–400 word synopses, genres, and AI advice.
+            Want to see all the books our bookstore has right now? Explore our complete store collection with in-depth editorial synopses, authors, and real-time stock availability.
           </p>
 
           <div class="pillar-highlight-box box-indigo">
-            <strong>🎯 Instant Search &amp; AI Advisor:</strong><br>
-            Search by book title or author, browse canonical genres, or ask our Reading Advisor what to read when you're in any mood!
+            <strong>🎯 Fast Title &amp; Author Search:</strong><br>
+            Search by book title or author name to find your favorite books immediately in our store!
           </div>
         </div>
 
@@ -553,25 +567,30 @@
         </button>
       </article>
 
-      <!-- ================= COMPONENT 3: ADDRESS & MAPS REVIEW ================= -->
-      <article class="pillar-card pillar-location">
+      <!-- ================= COMPONENT 3: AI ADVISOR & BROWSE BY GENRE ================= -->
+      <article class="pillar-card pillar-advisor">
         <div>
-          <span class="pillar-badge badge-amber">📍 Visit Our Shop &bull; Reviews</span>
-          <div class="pillar-icon-circle icon-amber">🌟</div>
-          <h2 class="pillar-title">Visit Book Mark in Hyderabad</h2>
+          <span class="pillar-badge badge-pink">💡 Reading Advisor &bull; Genres</span>
+          <div class="pillar-icon-circle icon-pink">✨</div>
+          <h2 class="pillar-title">Ask Our Advisor or Browse by Genre</h2>
           <p class="pillar-desc">
-            Walk into our cozy bookstore in Gachibowli. Browse stacks of literature, philosophy, fiction, self-help, and children's books in person.
+            Ask any question or describe your current mood and get personalized book recommendations, or browse our entire collection neatly arranged according to genres.
           </p>
 
-          <div class="pillar-highlight-box box-amber">
-            <strong>🏢 Store Address:</strong><br>
-            Plot No. 107, Telecom Nagar, Gachibowli Main Road, (Opp. Al Saba Restaurant / Beside Bharat Petrol Pump), Hyderabad, Telangana &ndash; 500032
+          <div class="pillar-highlight-box box-pink">
+            <strong>✨ Ask Any Question or Pick a Mood:</strong><br>
+            Tell our advisor how you're feeling (e.g. <i>"I'm in a bad mood"</i> or <i>"books on resilience"</i>) or switch to genre view to explore books categorized by subject.
           </div>
         </div>
 
-        <a href="https://share.google/9f0DC5AfQumkLCsp4" target="_blank" rel="noopener noreferrer" class="btn-pillar btn-maps" id="btnGoogleReviewPillar">
-          <span>⭐</span> View Address &amp; Google Reviews
-        </a>
+        <div style="display: flex; flex-direction: column; gap: 0.55rem; width: 100%;">
+          <button type="button" class="btn-pillar btn-advisor-hero" id="btnJumpToAdvisor">
+            <span>✨</span> Ask Reading Advisor ▾
+          </button>
+          <button type="button" class="btn-pillar btn-genre-hero" id="btnJumpToGenre">
+            <span>🏷️</span> Browse Books Arranged by Genre ▾
+          </button>
+        </div>
       </article>
 
     </div>

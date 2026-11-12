@@ -63,6 +63,34 @@ function initTabs() {
       }, 350);
     });
   }
+
+  // Third pillar button: Jump to AI Advisor
+  const btnJumpAdvisor = document.getElementById('btnJumpToAdvisor');
+  if (btnJumpAdvisor) {
+    btnJumpAdvisor.addEventListener('click', () => {
+      switchMainTab('tabAdvisor');
+      const ws = document.getElementById('searchWorkspace');
+      if (ws) {
+        ws.scrollIntoView({ behavior: 'smooth' });
+      }
+      setTimeout(() => {
+        const inp = document.getElementById('advisorQuestionInput');
+        if (inp) inp.focus();
+      }, 350);
+    });
+  }
+
+  // Third pillar button: Jump to Browse by Genre
+  const btnJumpGenre = document.getElementById('btnJumpToGenre');
+  if (btnJumpGenre) {
+    btnJumpGenre.addEventListener('click', () => {
+      switchMainTab('tabGenre');
+      const ws = document.getElementById('searchWorkspace');
+      if (ws) {
+        ws.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  }
 }
 
 function switchMainTab(tabId) {
@@ -97,17 +125,7 @@ function safeSet(id, val) {
 }
 
 async function fetchLightweightStats() {
-  try {
-    const res = await fetch('/api/stats');
-    const data = await res.json();
-    if (data.stats && data.stats.total_copies) {
-      safeSet('headerTotalCopies', `${data.stats.total_copies.toLocaleString()} copies in store`);
-    } else {
-      safeSet('headerTotalCopies', 'Live Inventory');
-    }
-  } catch (err) {
-    safeSet('headerTotalCopies', 'Live Inventory');
-  }
+  safeSet('headerTotalCopies', 'Live Inventory');
 }
 
 /* =========================================================================
@@ -557,7 +575,7 @@ function createBookTile(book, copy, matchType) {
           </strong>
           <span class="synopsis-badge">✨ 150–400 Words &bull; Editorial Synopsis</span>
         </div>
-        <div class="book-summary-text">${existingSummary ? escapeHtml(existingSummary).replace(/\n\n/g, '<br><br>') : '<em style="color:#64748b;">Loading comprehensive 300-400 word synopsis...</em>'}</div>
+        <div class="book-summary-text">${existingSummary ? escapeHtml(existingSummary).replace(/\n\n/g, '<br><br>') : '<em style="color:#64748b;">Loading comprehensive synopsis...</em>'}</div>
       </div>
     </div>
   `;
@@ -651,7 +669,7 @@ async function loadGenreTab() {
     availableGenresList.forEach(g => {
       const opt = document.createElement('option');
       opt.value = g.simple_genre;
-      opt.textContent = `${g.simple_genre} (${g.total_copies.toLocaleString()} copies)`;
+      opt.textContent = `${g.simple_genre}`;
       select.appendChild(opt);
 
       // Add interactive collector pill
@@ -660,7 +678,7 @@ async function loadGenreTab() {
         pill.type = 'button';
         pill.className = 'quick-genre-pill';
         pill.setAttribute('data-genre', g.simple_genre);
-        pill.innerHTML = `<span>${escapeHtml(g.simple_genre)}</span> <small style="opacity:0.75; font-size:0.72rem; margin-left:3px;">(${g.total_copies})</small>`;
+        pill.innerHTML = `<span>${escapeHtml(g.simple_genre)}</span>`;
         
         pill.addEventListener('click', () => {
           toggleGenreSelection(g.simple_genre);
