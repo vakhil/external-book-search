@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   safeInit('initSearch', initSearch);
   safeInit('initGenreTab', initGenreTab);
   safeInit('initAdvisorTab', initAdvisorTab);
+  safeInit('initSynopsisModal', initSynopsisModal);
 
   // Initial load
   fetchLightweightStats();
@@ -563,6 +564,8 @@ function createBookTile(book, copy, matchType) {
   const sellingPrice = (copy.selling_price !== null && copy.selling_price !== undefined && copy.selling_price !== '') ? copy.selling_price : (book.selling_price || '');
   const existingSummary = copy.summary || book.summary || bookSummaryCache.get(cleanTitle.toLowerCase()) || '';
 
+  const waInquiryUrl = `https://wa.me/919885098466?text=${encodeURIComponent(`Hi Book Mark! Is "${cleanTitle}" by ${cleanAuthor} available?`)}`;
+
   card.innerHTML = `
     <div class="book-card-main">
       <div class="book-card-header-left">
@@ -582,6 +585,9 @@ function createBookTile(book, copy, matchType) {
             <button type="button" class="btn-about-book" data-role="toggle-about">
               <span>📖</span> About the book ▾
             </button>
+            <a href="${waInquiryUrl}" target="_blank" class="btn-card-wa" title="Inquire on WhatsApp">
+              <span>💬</span> WhatsApp
+            </a>
             ${sellingPrice ? `<span class="chip" style="background:#f0fdf4; color:#166534; font-weight:700;">₹${escapeHtml(sellingPrice)}</span>` : ''}
           </div>
         </div>
@@ -605,6 +611,14 @@ function createBookTile(book, copy, matchType) {
   if (btnAbout) {
     btnAbout.addEventListener('click', (e) => {
       e.stopPropagation(); // prevent card container selection side-effects
+
+      // On mobile viewports (or screens <= 768px), open the modern bottom sheet modal!
+      if (window.innerWidth <= 768) {
+        openSynopsisBottomSheet(cleanTitle, cleanAuthor, bookId, copy.summary || book.summary);
+        return;
+      }
+
+      // On larger screens, toggle inline expansion
       const isExpanded = card.classList.contains('is-expanded');
       if (isExpanded) {
         card.classList.remove('is-expanded');
@@ -950,6 +964,69 @@ function initAdvisorTab() {
       if (q) submitQuestion(q);
     });
   });
+}
+
+/* =========================================================================
+   5. NATIVE BOTTOM SHEET SYNOPSIS MODAL CONTROLLER (MOBILE FIRST)
+   ========================================================================= */
+
+function initSynopsisModal() {
+  const backdrop = document.getElementById('synopsisModalBackdrop');
+  const btnClose = document.getElementById('btnSheetClose');
+  const sheet = document.getElementById('synopsisBottomSheet');
+
+  if (btnClose && backdrop) {
+    btnClose.addEventListener('click', () => closeSynopsisBottomSheet());
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        closeSynopsisBottomSheet();
+      }
+    });
+  }
+
+  // Escape key to dismiss modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSynopsisBottomSheet();
+  });
+}
+
+function openSynopsisBottomSheet(title, author, bookId, existingSum) {
+  const backdrop = document.getElementById('synopsisModalBackdrop');
+  const titleEl = document.getElementById('sheetBookTitle');
+  const authorEl = document.getElementById('sheetBookAuthor');
+  const bodyEl = document.getElementById('sheetBookBody');
+  const waBtn = document.getElementById('btnSheetWhatsApp');
+
+  if (!backdrop) return;
+
+  if (titleEl) titleEl.textContent = title;
+  if (authorEl) authorEl.textContent = author ? `by ${author}` : '';
+
+  if (waBtn) {
+    const inquiryText = `Hi Book Mark! I would like to inquire about "${title}" by ${author || 'Author'}.`;
+    waBtn.href = `https://wa.me/919885098466?text=${encodeURIComponent(inquiryText)}`;
+  }
+
+  const cached = existingSum || bookSummaryCache.get(title.toLowerCase());
+  if (cached) {
+    if (bodyEl) bodyEl.innerHTML = escapeHtml(cached).replace(/\n\n/g, '<br><br>');
+  } else {
+    if (bodyEl) bodyEl.innerHTML = '<div style="text-align:center; padding:1.5rem;"><div style="font-size:1.8rem; animation: pulse 1.5s infinite;">📖</div><p style="color:#64748b; margin-top:0.5rem;">Loading comprehensive synopsis...</p></div>';
+    fetchBookSummary(title, author, bookId).then(sum => {
+      if (sum && bodyEl) {
+        bodyEl.innerHTML = escapeHtml(sum).replace(/\n\n/g, '<br><br>');
+      }
+    });
+  }
+
+  backdrop.classList.add('is-open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSynopsisBottomSheet() {
+  const backdrop = document.getElementById('synopsisModalBackdrop');
+  if (backdrop) backdrop.classList.remove('is-open');
+  document.body.style.overflow = '';
 }
 
 function escapeHtml(str) {
