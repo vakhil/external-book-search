@@ -2734,12 +2734,47 @@ input, select, textarea, button {
   border-color: #0f172a !important;
 }
 
-/* 300-400 Word Deep Synopsis Card Styling */
+/* 300-400 Word Deep Synopsis Card Styling (Collapsible) */
 .book-card-expanded-area {
-  display: block !important;
+  display: none;
   margin-top: 0.95rem;
   padding-top: 0.85rem;
   border-top: 1px dashed #e2e8f0;
+}
+
+.book-card-item.is-expanded .book-card-expanded-area {
+  display: block;
+  animation: slideDownFade 0.25s ease-out;
+}
+
+.btn-about-book {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  color: #db2777;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.26rem 0.65rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.btn-about-book:hover {
+  background: #fce7f3;
+  border-color: #f472b6;
+  color: #be185d;
+  transform: translateY(-1px);
+}
+
+.btn-about-book.is-active {
+  background: #db2777;
+  border-color: #db2777;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(219, 39, 119, 0.25);
 }
 
 .book-summary-box {

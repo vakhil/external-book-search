@@ -497,7 +497,7 @@ function formatAvailabilityBadge(state) {
   if (state === 'SOLD') {
     return `<span class="state-chip state-sold"><span class="chip-dot"></span> Out of Stock</span>`;
   }
-  return `<span class="state-chip state-assigned"><span class="chip-dot"></span> In Stock</span>`;
+  return '';
 }
 
 function fetchBookSummary(title, author, bookId) {
@@ -562,6 +562,9 @@ function createBookTile(book, copy, matchType) {
             ${formatAvailabilityBadge(state)}
             <span class="chip book-lang-chip">🌐 ${escapeHtml(language)}</span>
             ${genre ? `<span class="chip simple-genre-chip">${escapeHtml(genre)}</span>` : ''}
+            <button type="button" class="btn-about-book" data-role="toggle-about">
+              <span>📖</span> About the book ▾
+            </button>
             ${sellingPrice ? `<span class="chip" style="background:#f0fdf4; color:#166534; font-weight:700;">₹${escapeHtml(sellingPrice)}</span>` : ''}
           </div>
         </div>
@@ -580,15 +583,32 @@ function createBookTile(book, copy, matchType) {
     </div>
   `;
 
-  // Always pre-load full synopsis into card if not already rendered
-  if (!existingSummary) {
-    fetchBookSummary(cleanTitle, cleanAuthor, bookId).then(sum => {
-      if (sum) {
-        copy.summary = sum;
-        book.summary = sum;
+  // Toggle "About the book" click handler
+  const btnAbout = card.querySelector('[data-role="toggle-about"]');
+  if (btnAbout) {
+    btnAbout.addEventListener('click', (e) => {
+      e.stopPropagation(); // prevent card container selection side-effects
+      const isExpanded = card.classList.contains('is-expanded');
+      if (isExpanded) {
+        card.classList.remove('is-expanded');
+        btnAbout.classList.remove('is-active');
+        btnAbout.innerHTML = '<span>📖</span> About the book ▾';
+      } else {
+        card.classList.add('is-expanded');
+        btnAbout.classList.add('is-active');
+        btnAbout.innerHTML = '<span>📖</span> About the book ▴';
+
+        // Load summary on demand when user requests it
         const sumEl = card.querySelector('.book-summary-text');
-        if (sumEl) {
-          sumEl.innerHTML = escapeHtml(sum).replace(/\n\n/g, '<br><br>');
+        const currentSum = copy.summary || book.summary || bookSummaryCache.get(cleanTitle.toLowerCase());
+        if (!currentSum || (sumEl && sumEl.innerHTML.includes('Loading comprehensive'))) {
+          fetchBookSummary(cleanTitle, cleanAuthor, bookId).then(sum => {
+            if (sum && sumEl) {
+              sumEl.innerHTML = escapeHtml(sum).replace(/\n\n/g, '<br><br>');
+              copy.summary = sum;
+              book.summary = sum;
+            }
+          });
         }
       }
     });
@@ -599,45 +619,11 @@ function createBookTile(book, copy, matchType) {
     const existing = copy.summary || book.summary || bookSummaryCache.get(cleanTitle.toLowerCase());
     if (existing) {
       card.setAttribute('title', `📖 ${cleanTitle} by ${cleanAuthor}\n\n${existing.slice(0, 300)}...`);
-    } else {
-      fetchBookSummary(cleanTitle, cleanAuthor, bookId).then(sum => {
-        if (sum) {
-          copy.summary = sum;
-          book.summary = sum;
-          card.setAttribute('title', `📖 ${cleanTitle} by ${cleanAuthor}\n\n${sum.slice(0, 300)}...`);
-          const sumEl = card.querySelector('.book-summary-text');
-          if (sumEl && sumEl.innerHTML.includes('Loading comprehensive')) {
-            sumEl.innerHTML = escapeHtml(sum).replace(/\n\n/g, '<br><br>');
-          }
-        }
-      });
-    }
-  });
-
-  // Card click to expand / select
-  card.addEventListener('click', () => {
-    const wasSelected = card.classList.contains('is-selected');
-    document.querySelectorAll('.book-card-item.is-selected').forEach(c => {
-      if (c !== card) c.classList.remove('is-selected');
-    });
-    if (wasSelected) {
-      card.classList.remove('is-selected');
-    } else {
-      card.classList.add('is-selected');
-      const sumEl = card.querySelector('.book-summary-text');
-      if (sumEl && (sumEl.innerHTML.includes('Loading comprehensive') || !copy.summary)) {
-        fetchBookSummary(cleanTitle, cleanAuthor, bookId).then(sum => {
-          if (sum && sumEl) {
-            sumEl.innerHTML = escapeHtml(sum).replace(/\n\n/g, '<br><br>');
-            copy.summary = sum;
-            book.summary = sum;
-          }
-        });
-      }
     }
   });
 
   return card;
+}
 }
 
 function createBookCard(bookGroup, matchType) {
