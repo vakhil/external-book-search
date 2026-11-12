@@ -47,6 +47,22 @@ function initTabs() {
       switchMainTab(tabId);
     });
   });
+
+  // Middle pillar button smooth scrolling to search workspace and focusing input
+  const btnJump = document.getElementById('btnJumpToSearch');
+  if (btnJump) {
+    btnJump.addEventListener('click', () => {
+      switchMainTab('tabSearch');
+      const ws = document.getElementById('searchWorkspace');
+      if (ws) {
+        ws.scrollIntoView({ behavior: 'smooth' });
+      }
+      setTimeout(() => {
+        const inp = document.getElementById('searchInput');
+        if (inp) inp.focus();
+      }, 350);
+    });
+  }
 }
 
 function switchMainTab(tabId) {

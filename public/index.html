@@ -3,242 +3,764 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#312e81">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Book Finder">
-  <title>Bookmark - Search, Genres &amp; AI Advisor</title>
-  <link rel="stylesheet" href="/styles.css?v=4.8">
+  <meta name="apple-mobile-web-app-title" content="Book Mark">
+  <title>Book Mark - Bookstore &amp; Live Search</title>
+  <link rel="stylesheet" href="/styles.css?v=5.0">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
   <style>
-    /* Styling refinements specifically tailored for the public search portal */
-    .catalog-badge {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #3b82f6;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 9999px;
-      padding: 0.3rem 0.75rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
+    /* ========================================================
+       MAGICAL BOOKSTORE HERO & 3-CARD SHOWCASE STYLES
+       ======================================================== */
+    :root {
+      --store-indigo: #312e81;
+      --store-purple: #4338ca;
+      --store-amber: #f59e0b;
+      --store-emerald: #059669;
     }
-    .public-portal-tag {
-      font-size: 0.75rem;
+
+    body {
+      background: #f8fafc;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Brand Navigation */
+    .brand-top-bar {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
+      color: #ffffff;
+      padding: 0.95rem 1.5rem;
+      box-shadow: 0 4px 20px rgba(30, 27, 75, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-logo-group {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      text-decoration: none;
+      color: #ffffff;
+    }
+    .brand-logo-icon {
+      font-size: 1.5rem;
+      filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.5));
+    }
+    .brand-title-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.45rem;
       font-weight: 700;
-      color: #059669;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
-      border-radius: 6px;
-      padding: 0.2rem 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-city-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fef08a;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-    .advisor-summary-card {
-      background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
-      border: 1.5px solid #86efac;
-      border-radius: 12px;
-      padding: 1.25rem 1.4rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
-      animation: fadeIn 0.25s ease-out;
+
+    /* Welcome Hero Header */
+    .hub-hero {
+      position: relative;
+      background: linear-gradient(180deg, #1e1b4b 0%, #2e1065 50%, #1e1b4b 100%);
+      color: #ffffff;
+      padding: 2.75rem 1.5rem 3.5rem;
+      text-align: center;
+      overflow: hidden;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
+    .hub-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 30%, rgba(245, 158, 11, 0.15) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hub-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fde68a;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.35rem 0.95rem;
+      border-radius: 9999px;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+    .hub-hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      margin: 0 auto 0.85rem;
+      max-width: 820px;
+      line-height: 1.18;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff 0%, #fef3c7 70%, #fde68a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hub-hero p {
+      color: #cbd5e1;
+      font-size: clamp(0.95rem, 2vw, 1.12rem);
+      max-width: 680px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Magical Kids Reading Animation Scene */
+    .kids-reading-stage {
+      max-width: 600px;
+      margin: 1.5rem auto 0;
+      padding: 0.5rem;
+      position: relative;
+    }
+    .kids-reading-svg {
+      width: 100%;
+      height: auto;
+      max-height: 220px;
+      filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.35));
+    }
+
+    /* Keyframe Animations */
+    @keyframes gentleFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-7px) rotate(1.5deg); }
+    }
+    @keyframes gentleFloatReverse {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(-1.5deg); }
+    }
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 0.3; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.25); filter: drop-shadow(0 0 6px #fde047); }
+    }
+    @keyframes pageTurnSway {
+      0%, 100% { transform: scaleX(1); }
+      50% { transform: scaleX(0.88); }
+    }
+
+    .anim-float-child1 { animation: gentleFloat 4s ease-in-out infinite; transform-origin: center bottom; }
+    .anim-float-child2 { animation: gentleFloatReverse 4.5s ease-in-out infinite 0.5s; transform-origin: center bottom; }
+    .anim-star { animation: starTwinkle 2.5s ease-in-out infinite; }
+    .anim-star-d1 { animation-delay: 0.4s; }
+    .anim-star-d2 { animation-delay: 0.9s; }
+    .anim-star-d3 { animation-delay: 1.4s; }
+    .anim-pageturn { animation: pageTurnSway 3s ease-in-out infinite; transform-origin: center; }
+
+    /* The 3 Core Components Showcase Grid */
+    .hub-showcase-wrap {
+      max-width: 1200px;
+      margin: -2.25rem auto 2.5rem;
+      padding: 0 1.25rem;
+      position: relative;
+      z-index: 10;
+    }
+    .three-pillar-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.35rem;
+    }
+    @media (max-width: 960px) {
+      .three-pillar-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+      .hub-showcase-wrap {
+        margin-top: -1.5rem;
+      }
+    }
+
+    /* Pillar Card Base */
+    .pillar-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 1.75rem 1.6rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+      border: 1.5px solid #e2e8f0;
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+    .pillar-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.16);
+    }
+
+    /* Pillar 1: WhatsApp Special Accent */
+    .pillar-whatsapp {
+      border-color: #a7f3d0;
+      background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+    }
+    .pillar-whatsapp:hover {
+      border-color: #34d399;
+      box-shadow: 0 20px 40px -8px rgba(16, 185, 129, 0.22);
+    }
+
+    /* Pillar 2: Live Search (Middle) Special Accent - HERO CARD */
+    .pillar-search {
+      border-color: #c7d2fe;
+      background: linear-gradient(180deg, #ffffff 0%, #eef2ff 100%);
+      transform: scale(1.02);
+      box-shadow: 0 16px 40px -6px rgba(67, 56, 202, 0.2);
+    }
+    .pillar-search:hover {
+      border-color: #818cf8;
+      box-shadow: 0 24px 50px -8px rgba(67, 56, 202, 0.3);
+      transform: scale(1.03) translateY(-4px);
+    }
+    @media (max-width: 960px) {
+      .pillar-search {
+        transform: none;
+      }
+      .pillar-search:hover {
+        transform: translateY(-5px);
+      }
+    }
+
+    /* Pillar 3: Address & Maps Review Special Accent */
+    .pillar-location {
+      border-color: #fed7aa;
+      background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+    }
+    .pillar-location:hover {
+      border-color: #fb923c;
+      box-shadow: 0 20px 40px -8px rgba(249, 115, 22, 0.22);
+    }
+
+    /* Card Top Elements */
+    .pillar-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.22rem 0.65rem;
+      border-radius: 9999px;
+      width: fit-content;
+      margin-bottom: 0.85rem;
+    }
+    .badge-green { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-indigo { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+    .badge-amber { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+
+    .pillar-icon-circle {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+    .icon-green { background: #dcfce7; color: #16a34a; box-shadow: 0 8px 16px rgba(22, 163, 74, 0.18); }
+    .icon-indigo { background: #e0e7ff; color: #4f46e5; box-shadow: 0 8px 16px rgba(79, 70, 229, 0.2); }
+    .icon-amber { background: #ffedd5; color: #ea580c; box-shadow: 0 8px 16px rgba(234, 88, 12, 0.18); }
+
+    .pillar-title {
+      font-size: 1.32rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 0.55rem;
+      line-height: 1.25;
+    }
+    .pillar-desc {
+      font-size: 0.9rem;
+      color: #475569;
+      line-height: 1.55;
+      margin: 0 0 1.25rem;
+    }
+
+    /* Highlight Banner inside cards */
+    .pillar-highlight-box {
+      border-radius: 10px;
+      padding: 0.75rem 0.9rem;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      margin-bottom: 1.25rem;
+    }
+    .box-green {
+      background: rgba(220, 252, 231, 0.6);
+      border: 1px dashed #86efac;
+      color: #166534;
+    }
+    .box-indigo {
+      background: rgba(224, 231, 255, 0.6);
+      border: 1px dashed #a5b4fc;
+      color: #3730a3;
+    }
+    .box-amber {
+      background: rgba(255, 237, 213, 0.6);
+      border: 1px dashed #fdba74;
+      color: #9a3412;
+    }
+
+    /* Pillar Buttons */
+    .btn-pillar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      width: 100%;
+      padding: 0.85rem 1.15rem;
+      font-size: 0.96rem;
+      font-weight: 700;
+      border-radius: 12px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: none;
+    }
+    .btn-whatsapp {
+      background: #25d366;
+      color: #ffffff;
+      box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
+    }
+    .btn-whatsapp:hover {
+      background: #1eb956;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45);
+    }
+    .btn-search-hero {
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      color: #ffffff;
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+    }
+    .btn-search-hero:hover {
+      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(79, 70, 229, 0.55);
+    }
+    .btn-maps {
+      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+      color: #ffffff;
+      box-shadow: 0 6px 18px rgba(234, 88, 12, 0.35);
+    }
+    .btn-maps:hover {
+      background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(234, 88, 12, 0.45);
+    }
+
+    /* Search & Exploration Area Header Anchor */
+    .search-workspace-anchor {
+      scroll-margin-top: 80px;
     }
   </style>
 </head>
 <body>
-  <!-- Clean, Minimal Header -->
-  <header class="simple-header">
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <div class="brand">🔖 Bookmark</div>
-      <span class="public-portal-tag">Book Search &amp; Advisor</span>
-    </div>
-    <div class="header-right-actions" style="display: flex; align-items: center; gap: 0.75rem;">
-      <span class="catalog-badge" id="headerCopiesCount">
-        <span>📚</span> <span id="headerTotalCopies">Loading catalog...</span>
-      </span>
+
+  <!-- Clean Top Bar -->
+  <header class="brand-top-bar">
+    <a href="#" class="brand-logo-group">
+      <span class="brand-logo-icon">🔖</span>
+      <span class="brand-title-text">Book Mark</span>
+      <span class="brand-city-badge">Gachibowli, Hyderabad</span>
+    </a>
+    <div style="display: flex; align-items: center; gap: 0.65rem;">
+      <a href="https://wa.me/919885098466?text=Hi%20Book%20Mark!%20I%20would%20like%20to%20request%20a%20book." target="_blank" class="catalog-badge" style="background:#25d366; color:#ffffff; border:none; text-decoration:none;" title="Chat directly on WhatsApp">
+        <span>💬</span> <span>WhatsApp: 9885098466</span>
+      </a>
     </div>
   </header>
 
-  <!-- Navigation Tabs: Search, Genre, Advisor -->
-  <nav class="main-tabs simple-nav">
-    <button class="tab-btn active" data-tab="tabSearch">
-      <span class="tab-icon">🔍</span>
-      <span class="tab-label">Search Books</span>
-    </button>
-    <button class="tab-btn" data-tab="tabGenre">
-      <span class="tab-icon">🏷️</span>
-      <span class="tab-label">Browse by Genre</span>
-    </button>
-    <button class="tab-btn" data-tab="tabAdvisor" id="tabBtnAdvisor">
-      <span class="tab-icon">💡</span>
-      <span class="tab-label">AI Advisor</span>
-    </button>
-  </nav>
+  <!-- Welcoming Hero with Animated Kids Reading Books -->
+  <section class="hub-hero">
+    <div class="hub-hero-badge">📖 Hyderabad's Favorite Neighborhood Bookstore</div>
+    <h1>A World of Stories Awaits You at Book Mark</h1>
+    <p>Discover thousands of curated titles, request any book directly with our team, or step into our cozy aisles in Gachibowli.</p>
 
-  <!-- Main Workspaces Container -->
-  <main class="container">
+    <!-- Animated Kids Reading Books SVG Scene -->
+    <div class="kids-reading-stage">
+      <svg class="kids-reading-svg" viewBox="0 0 620 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cloudGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05"/>
+          </linearGradient>
+          <linearGradient id="magicBeam" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="bookCoverBoy" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#06b6d4"/>
+            <stop offset="100%" stop-color="#0284c7"/>
+          </linearGradient>
+          <linearGradient id="bookCoverGirl" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ec4899"/>
+            <stop offset="100%" stop-color="#be185d"/>
+          </linearGradient>
+          <linearGradient id="openBookGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#fef08a"/>
+          </linearGradient>
+        </defs>
 
-    <!-- ==================== TAB 1: SEARCH ==================== -->
-    <section id="tabSearch" class="tab-pane active">
-      <!-- Search Mode Pills (Book Title [Default], Author) -->
-      <div class="search-mode-bar" id="searchModeBar">
-        <span class="search-mode-label">Search by:</span>
-        <button type="button" class="search-mode-pill active" data-type="title">📖 Book Title</button>
-        <button type="button" class="search-mode-pill" data-type="author">✍️ Author's Name</button>
-      </div>
+        <!-- Floating Cloud Islands -->
+        <ellipse cx="140" cy="180" rx="90" ry="16" fill="url(#cloudGrad)"/>
+        <ellipse cx="480" cy="180" rx="90" ry="16" fill="url(#cloudGrad)"/>
+        <ellipse cx="310" cy="195" rx="140" ry="18" fill="url(#cloudGrad)"/>
 
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search by book title (e.g. Awaken the Giant Within)..." autocomplete="off" autofocus>
-        <button type="button" class="btn-voice-search" id="btnVoiceSearch" title="Speak book title or author">
-          <span class="mic-icon">🎙️</span>
+        <!-- Magical Glowing Star Dust & Sparkles -->
+        <circle cx="210" cy="65" r="4" fill="#fde047" class="anim-star anim-star-d1"/>
+        <circle cx="410" cy="55" r="5" fill="#fef08a" class="anim-star anim-star-d2"/>
+        <circle cx="310" cy="35" r="4.5" fill="#fde047" class="anim-star anim-star-d3"/>
+        <path d="M120 40 L123 48 L131 51 L123 54 L120 62 L117 54 L109 51 L117 48 Z" fill="#fde047" class="anim-star"/>
+        <path d="M500 45 L503 52 L510 55 L503 58 L500 65 L497 58 L490 55 L497 52 Z" fill="#fde047" class="anim-star anim-star-d2"/>
+
+        <!-- Child 1: Boy sitting cross-legged reading open book (Left) -->
+        <g class="anim-float-child1">
+          <!-- Shadow -->
+          <ellipse cx="170" cy="178" rx="42" ry="7" fill="rgba(0,0,0,0.2)"/>
+          <!-- Body / T-shirt -->
+          <rect x="150" y="115" width="40" height="36" rx="10" fill="#3b82f6"/>
+          <!-- Legs (Cross-legged) -->
+          <path d="M142 145 Q170 162 198 145 Q170 170 142 145 Z" fill="#1e3a8a"/>
+          <!-- Head & Hair -->
+          <circle cx="170" cy="92" r="16" fill="#fbcfe8"/>
+          <path d="M154 90 C154 75 186 75 186 90 C182 82 158 82 154 90 Z" fill="#78350f"/>
+          <!-- Smile -->
+          <path d="M167 96 Q170 100 173 96" stroke="#831843" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          <!-- Open Book held in hands -->
+          <g transform="translate(170, 132)">
+            <!-- Left Page -->
+            <path d="M0 0 C-12 -6 -24 -4 -32 6 L-30 20 C-22 12 -12 10 0 14 Z" fill="url(#openBookGrad)" class="anim-pageturn"/>
+            <!-- Right Page -->
+            <path d="M0 0 C12 -6 24 -4 32 6 L30 20 C22 12 12 10 0 14 Z" fill="url(#openBookGrad)" class="anim-pageturn"/>
+            <!-- Cover Spine -->
+            <path d="M-33 7 L0 1 L33 7 L31 21 L0 15 L-31 21 Z" fill="url(#bookCoverBoy)"/>
+            <!-- Golden Reading Light upward beam -->
+            <polygon points="-16,-2 16,-2 32,-35 -32,-35" fill="url(#magicBeam)"/>
+          </g>
+        </g>
+
+        <!-- Central Magic Stacks of Glowing Books -->
+        <g transform="translate(310, 175)">
+          <ellipse cx="0" cy="5" rx="48" ry="7" fill="rgba(0,0,0,0.25)"/>
+          <!-- Book 1 (Bottom) -->
+          <rect x="-42" y="-12" width="84" height="14" rx="3" fill="#dc2626"/>
+          <rect x="-38" y="-9" width="76" height="8" rx="1" fill="#fef2f2"/>
+          <!-- Book 2 (Middle) -->
+          <rect x="-36" y="-24" width="72" height="13" rx="3" fill="#059669"/>
+          <rect x="-32" y="-21" width="64" height="7" rx="1" fill="#ecfdf5"/>
+          <!-- Book 3 (Top) -->
+          <rect x="-30" y="-35" width="60" height="12" rx="3" fill="#f59e0b"/>
+          <rect x="-27" y="-32" width="54" height="6" rx="1" fill="#fffbeb"/>
+          <!-- Sparkles bursting from top book -->
+          <circle cx="-12" cy="-48" r="3" fill="#fef08a" class="anim-star anim-star-d1"/>
+          <circle cx="15" cy="-52" r="3.5" fill="#fde047" class="anim-star anim-star-d2"/>
+          <circle cx="0" cy="-60" r="4" fill="#ffffff" class="anim-star anim-star-d3"/>
+        </g>
+
+        <!-- Child 2: Girl leaning on a giant book absorbed in story (Right) -->
+        <g class="anim-float-child2">
+          <!-- Shadow -->
+          <ellipse cx="450" cy="178" rx="42" ry="7" fill="rgba(0,0,0,0.2)"/>
+          <!-- Giant upright book she leans on -->
+          <rect x="462" y="98" width="16" height="68" rx="3" fill="url(#bookCoverGirl)"/>
+          <rect x="478" y="102" width="6" height="60" rx="1" fill="#fdf2f8"/>
+          <!-- Body / Dress -->
+          <path d="M430 120 L452 120 L460 162 L422 162 Z" fill="#ec4899"/>
+          <!-- Head & Ponytail -->
+          <circle cx="438" cy="94" r="16" fill="#fde047" opacity="0.15"/>
+          <circle cx="438" cy="94" r="15" fill="#fbcfe8"/>
+          <!-- Hair & cute bun -->
+          <path d="M424 92 C424 76 452 76 452 92 C448 83 428 83 424 92 Z" fill="#451a03"/>
+          <circle cx="424" cy="80" r="7" fill="#451a03"/>
+          <!-- Eyes & Happy Smile -->
+          <circle cx="443" cy="93" r="1.8" fill="#1e1b4b"/>
+          <path d="M438 99 Q442 103 446 99" stroke="#831843" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          <!-- Small Book in her hands -->
+          <g transform="translate(444, 126)">
+            <path d="M-15 0 L0 5 L15 0 L15 16 L0 21 L-15 16 Z" fill="url(#openBookGrad)"/>
+            <path d="M-17 1 L0 6 L17 1 L17 17 L0 22 L-17 17 Z" stroke="#be185d" stroke-width="1.5" fill="none"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       THE 3 CORE PILLARS SHOWCASE (Component 1, 2, and 3)
+       ======================================================== -->
+  <div class="hub-showcase-wrap">
+    <div class="three-pillar-grid">
+
+      <!-- ================= COMPONENT 1: WHATSAPP ================= -->
+      <article class="pillar-card pillar-whatsapp">
+        <div>
+          <span class="pillar-badge badge-green">💬 Direct Connect</span>
+          <div class="pillar-icon-circle icon-green">📱</div>
+          <h2 class="pillar-title">Need a Book? WhatsApp Us</h2>
+          <p class="pillar-desc">
+            Directly connect with our bookstore team on your phone. You can inquire about prices, reserve copies, or request <b>any new book</b> not currently on the shelves.
+          </p>
+
+          <div class="pillar-highlight-box box-green">
+            <strong>✨ Friendly Reminder:</strong><br>
+            Any new book can be requested here! Before messaging, <b>check the middle section</b> below to search the thousands of titles already in our store inventory.
+          </div>
+        </div>
+
+        <a href="https://wa.me/919885098466?text=Hi%20Book%20Mark!%20I%20would%20like%20to%20inquire%20about%20a%20book." target="_blank" class="btn-pillar btn-whatsapp" id="btnWhatsAppPillar">
+          <span>💬</span> Chat on WhatsApp (9885098466)
+        </a>
+      </article>
+
+      <!-- ================= COMPONENT 2: MIDDLE (LIVE SEARCH) ================= -->
+      <article class="pillar-card pillar-search">
+        <div>
+          <span class="pillar-badge badge-indigo">⚡ Live Inventory &bull; 6,700+ Books</span>
+          <div class="pillar-icon-circle icon-indigo">🔍</div>
+          <h2 class="pillar-title">Check What Books Are in Our Store</h2>
+          <p class="pillar-desc">
+            Want to see all the books our bookstore has right now? Explore <b>6,738 physical copies</b> across 4,550+ titles, complete with 300–400 word synopses, genres, and AI advice.
+          </p>
+
+          <div class="pillar-highlight-box box-indigo">
+            <strong>🎯 Instant Search &amp; AI Advisor:</strong><br>
+            Search by book title or author, browse canonical genres, or ask our Gemini Advisor what to read when you're in any mood!
+          </div>
+        </div>
+
+        <button type="button" class="btn-pillar btn-search-hero" id="btnJumpToSearch">
+          <span>📖</span> Explore &amp; Search Store Inventory ▾
         </button>
-        <button class="btn-clear" id="btnClearSearch" style="display: none;" title="Clear">✕</button>
-      </div>
+      </article>
 
-      <!-- Action Row: Voice Search -->
-      <div class="search-actions-row">
-        <button type="button" class="btn btn-secondary btn-sm" id="btnVoiceSearchAction">
-          🎙️ Speak to Search
-        </button>
-      </div>
+      <!-- ================= COMPONENT 3: ADDRESS & MAPS REVIEW ================= -->
+      <article class="pillar-card pillar-location">
+        <div>
+          <span class="pillar-badge badge-amber">📍 Visit Our Shop &bull; Reviews</span>
+          <div class="pillar-icon-circle icon-amber">🌟</div>
+          <h2 class="pillar-title">Visit Book Mark in Hyderabad</h2>
+          <p class="pillar-desc">
+            Walk into our cozy bookstore in Gachibowli. Browse stacks of literature, philosophy, fiction, self-help, and children's books in person.
+          </p>
 
-      <div id="voiceSearchStatusNotice" style="display:none; margin: 0.25rem 0 0.85rem 0; padding: 0.5rem 0.75rem; background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; font-size: 0.88rem; color: #92400e; font-weight: 500; align-items: center; gap: 0.5rem;">
-        <span class="pulse-mic">🔴</span>
-        <span id="voiceSearchStatusText">Listening... Speak book title or author now</span>
-      </div>
-
-      <!-- Live Search Results -->
-      <div id="searchResultsContainer">
-        <div class="empty-prompt">
-          <div class="prompt-icon">📖</div>
-          <h3>Find Any Book Instantly</h3>
-          <p>Type a book title or author to browse matching books.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== TAB 2: GENRE ==================== -->
-    <section id="tabGenre" class="tab-pane">
-      <div class="clean-card">
-        <div class="card-title-row">
-          <div>
-            <h2>Browse &amp; Collect Books by Genre</h2>
-            <p class="subtitle" style="margin: 0.2rem 0 0; font-size: 0.85rem; color: #64748b;">
-              Explore the bookstore's inventory organized into standard canonical genres. Click any genre or select multiple genres to browse books across categories!
-            </p>
-          </div>
-          <span class="id-tag" id="genreBooksCountBadge">0 Books</span>
-        </div>
-
-        <!-- Multi-Genre Collection Control Bar -->
-        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin: 1rem 0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
-            <div style="font-size:0.86rem; font-weight:800; color:#1e293b; text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:0.4rem;">
-              <span>🏷️</span> Common Genres Directory
-              <span id="genreSelectedCountLabel" style="font-size:0.75rem; font-weight:700; background:#e0e7ff; color:#4338ca; border-radius:9999px; padding:0.15rem 0.55rem; margin-left:0.35rem; display:none;">0 selected</span>
-            </div>
-            <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
-              <button type="button" class="btn btn-sm btn-outline" id="btnSelectAllGenres" style="font-size:0.76rem; font-weight:700; padding:0.3rem 0.65rem; border-radius:6px;">
-                ✓ Select All
-              </button>
-              <button type="button" class="btn btn-sm btn-outline" id="btnClearGenreSelection" style="font-size:0.76rem; font-weight:700; padding:0.3rem 0.65rem; border-radius:6px; color:#ef4444; border-color:#fca5a5;">
-                ✕ Clear
-              </button>
-            </div>
-          </div>
-
-          <!-- Quick Genre Pills & Collector Chips -->
-          <div id="quickGenrePills" class="quick-pills-bar" style="display:flex; flex-wrap:wrap; gap:0.45rem; margin-bottom:0.85rem;"></div>
-
-          <!-- Secondary Filters Row (Single select fallback + Text filter) -->
-          <div class="genre-filter-row" style="display:flex; flex-wrap:wrap; gap:0.75rem; align-items:flex-end; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
-            <div style="flex: 1.2; min-width: 220px;">
-              <label for="genreSelect" style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:0.25rem;">OR CHOOSE SINGLE GENRE</label>
-              <select id="genreSelect" class="form-control" style="font-size:0.9rem; font-weight:600; padding:0.55rem 0.75rem; width:100%; border:1px solid #cbd5e1; border-radius:8px; background:#fff;">
-                <option value="">-- Choose a Single Genre --</option>
-              </select>
-            </div>
-
-            <div style="flex: 1; min-width: 200px;">
-              <label for="genreFilterInput" style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:0.25rem;">FILTER WITHIN COLLECTED BOOKS</label>
-              <input type="text" id="genreFilterInput" placeholder="Filter title or author..." style="font-size:0.9rem; padding:0.55rem 0.75rem; width:100%; border:1px solid #cbd5e1; border-radius:8px;">
-            </div>
+          <div class="pillar-highlight-box box-amber">
+            <strong>🏢 Store Address:</strong><br>
+            Plot No. 107, Telecom Nagar, Gachibowli Main Road, (Opp. Al Saba Restaurant / Beside Bharat Petrol Pump), Hyderabad, Telangana &ndash; 500032
           </div>
         </div>
 
-        <!-- Genre Books Results Container -->
-        <div id="genreBooksContainer">
+        <a href="https://share.google/9f0DC5AfQumkLCsp4" target="_blank" rel="noopener noreferrer" class="btn-pillar btn-maps" id="btnGoogleReviewPillar">
+          <span>⭐</span> View Address &amp; Google Reviews
+        </a>
+      </article>
+
+    </div>
+  </div>
+
+  <!-- ========================================================
+       LIVE SEARCH, GENRE & AI ADVISOR WORKSPACE
+       ======================================================== -->
+  <div id="searchWorkspace" class="search-workspace-anchor">
+    
+    <!-- Navigation Tabs: Search, Genre, Advisor -->
+    <nav class="main-tabs simple-nav" style="max-width: 1200px; margin: 0 auto 1.5rem; border-radius: 14px;">
+      <button class="tab-btn active" data-tab="tabSearch">
+        <span class="tab-icon">🔍</span>
+        <span class="tab-label">Search Books</span>
+      </button>
+      <button class="tab-btn" data-tab="tabGenre">
+        <span class="tab-icon">🏷️</span>
+        <span class="tab-label">Browse by Genre</span>
+      </button>
+      <button class="tab-btn" data-tab="tabAdvisor" id="tabBtnAdvisor">
+        <span class="tab-icon">💡</span>
+        <span class="tab-label">AI Advisor</span>
+      </button>
+    </nav>
+
+    <!-- Main Workspaces Container -->
+    <main class="container">
+
+      <!-- ==================== TAB 1: SEARCH ==================== -->
+      <section id="tabSearch" class="tab-pane active">
+        <!-- Search Mode Pills (Book Title [Default], Author) -->
+        <div class="search-mode-bar" id="searchModeBar">
+          <span class="search-mode-label">Search by:</span>
+          <button type="button" class="search-mode-pill active" data-type="title">📖 Book Title</button>
+          <button type="button" class="search-mode-pill" data-type="author">✍️ Author's Name</button>
+        </div>
+
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search by book title (e.g. Awaken the Giant Within)..." autocomplete="off" autofocus>
+          <button type="button" class="btn-voice-search" id="btnVoiceSearch" title="Speak book title or author">
+            <span class="mic-icon">🎙️</span>
+          </button>
+          <button class="btn-clear" id="btnClearSearch" style="display: none;" title="Clear">✕</button>
+        </div>
+
+        <!-- Action Row: Voice Search -->
+        <div class="search-actions-row">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnVoiceSearchAction">
+            🎙️ Speak to Search
+          </button>
+        </div>
+
+        <div id="voiceSearchStatusNotice" style="display:none; margin: 0.25rem 0 0.85rem 0; padding: 0.5rem 0.75rem; background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; font-size: 0.88rem; color: #92400e; font-weight: 500; align-items: center; gap: 0.5rem;">
+          <span class="pulse-mic">🔴</span>
+          <span id="voiceSearchStatusText">Listening... Speak book title or author now</span>
+        </div>
+
+        <!-- Live Search Results -->
+        <div id="searchResultsContainer">
           <div class="empty-prompt">
-            <div class="prompt-icon">🏷️</div>
-            <h3>Select or Collect Genres Above</h3>
-            <p>Click any common genre pill above (e.g. <b>Fiction</b>, <b>Philosophy</b>, <b>History</b>, <b>Self-Help</b>) to collect and browse all matching books.</p>
+            <div class="prompt-icon">📖</div>
+            <h3>Find Any Book Instantly</h3>
+            <p>Type a book title or author above to see whether it is currently in stock at Book Mark.</p>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ==================== TAB 3: AI ADVISOR ==================== -->
-    <section id="tabAdvisor" class="tab-pane">
-      <div class="clean-card">
-        <div class="card-title-row">
-          <div>
-            <h2>Ask for Book Recommendations</h2>
-            <p class="subtitle" style="margin: 0.2rem 0 0; font-size: 0.85rem; color: #64748b;">
-              Ask natural questions or describe how you are feeling (e.g. <i>"I'm in a bad mood"</i>, <i>"I want philosophical Japanese books"</i>, or <i>"books on resilience"</i>).
-            </p>
+      <!-- ==================== TAB 2: GENRE ==================== -->
+      <section id="tabGenre" class="tab-pane">
+        <div class="clean-card">
+          <div class="card-title-row">
+            <div>
+              <h2>Browse &amp; Collect Books by Genre</h2>
+              <p class="subtitle" style="margin: 0.2rem 0 0; font-size: 0.85rem; color: #64748b;">
+                Explore the bookstore's inventory organized into standard canonical genres. Click any genre or select multiple genres to browse books across categories!
+              </p>
+            </div>
+            <span class="id-tag" id="genreBooksCountBadge">0 Books</span>
           </div>
-          <span class="catalog-badge" style="background:#eef2ff; color:#4338ca; border-color:#c7d2fe;">✨ Gemini Flash &bull; Instant Synopses</span>
+
+          <!-- Multi-Genre Collection Control Bar -->
+          <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin: 1rem 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+              <div style="font-size:0.86rem; font-weight:800; color:#1e293b; text-transform:uppercase; letter-spacing:0.04em; display:flex; align-items:center; gap:0.4rem;">
+                <span>🏷️</span> Common Genres Directory
+                <span id="genreSelectedCountLabel" style="font-size:0.75rem; font-weight:700; background:#e0e7ff; color:#4338ca; border-radius:9999px; padding:0.15rem 0.55rem; margin-left:0.35rem; display:none;">0 selected</span>
+              </div>
+              <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+                <button type="button" class="btn btn-sm btn-outline" id="btnSelectAllGenres" style="font-size:0.76rem; font-weight:700; padding:0.3rem 0.65rem; border-radius:6px;">
+                  ✓ Select All
+                </button>
+                <button type="button" class="btn btn-sm btn-outline" id="btnClearGenreSelection" style="font-size:0.76rem; font-weight:700; padding:0.3rem 0.65rem; border-radius:6px; color:#ef4444; border-color:#fca5a5;">
+                  ✕ Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Genre Pills & Collector Chips -->
+            <div id="quickGenrePills" class="quick-pills-bar" style="display:flex; flex-wrap:wrap; gap:0.45rem; margin-bottom:0.85rem;"></div>
+
+            <!-- Secondary Filters Row (Single select fallback + Text filter) -->
+            <div class="genre-filter-row" style="display:flex; flex-wrap:wrap; gap:0.75rem; align-items:flex-end; border-top:1px solid #e2e8f0; padding-top:0.75rem;">
+              <div style="flex: 1.2; min-width: 220px;">
+                <label for="genreSelect" style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:0.25rem;">OR CHOOSE SINGLE GENRE</label>
+                <select id="genreSelect" class="form-control" style="font-size:0.9rem; font-weight:600; padding:0.55rem 0.75rem; width:100%; border:1px solid #cbd5e1; border-radius:8px; background:#fff;">
+                  <option value="">-- Choose a Single Genre --</option>
+                </select>
+              </div>
+
+              <div style="flex: 1; min-width: 200px;">
+                <label for="genreFilterInput" style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:0.25rem;">FILTER WITHIN COLLECTED BOOKS</label>
+                <input type="text" id="genreFilterInput" placeholder="Filter title or author..." style="font-size:0.9rem; padding:0.55rem 0.75rem; width:100%; border:1px solid #cbd5e1; border-radius:8px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Genre Books Results Container -->
+          <div id="genreBooksContainer">
+            <div class="empty-prompt">
+              <div class="prompt-icon">🏷️</div>
+              <h3>Select or Collect Genres Above</h3>
+              <p>Click any common genre pill above (e.g. <b>Fiction</b>, <b>Philosophy</b>, <b>History</b>, <b>Self-Help</b>) to collect and browse all matching books.</p>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div class="advisor-input-box" style="margin: 1rem 0;">
-          <div style="display:flex; gap:0.5rem;">
-            <input type="text" id="advisorQuestionInput" placeholder="Describe your mood, situation, or what you want to read..." style="flex:1; font-size:0.95rem; padding:0.75rem 1rem; border:1px solid #cbd5e1; border-radius:8px;">
-            <button type="button" class="btn btn-primary" id="btnAskAdvisor" style="padding:0.75rem 1.35rem; font-weight:700;">
-              ✨ Ask Advisor
-            </button>
+      <!-- ==================== TAB 3: AI ADVISOR ==================== -->
+      <section id="tabAdvisor" class="tab-pane">
+        <div class="clean-card">
+          <div class="card-title-row">
+            <div>
+              <h2>Ask for Book Recommendations</h2>
+              <p class="subtitle" style="margin: 0.2rem 0 0; font-size: 0.85rem; color: #64748b;">
+                Ask natural questions or describe how you are feeling (e.g. <i>"I'm in a bad mood"</i>, <i>"I want philosophical Japanese books"</i>, or <i>"books on resilience"</i>).
+              </p>
+            </div>
+            <span class="catalog-badge" style="background:#eef2ff; color:#4338ca; border-color:#c7d2fe;">✨ Gemini Flash &bull; Instant Synopses</span>
           </div>
 
-          <!-- Example Question Pills -->
-          <div style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.45rem; align-items:center;">
-            <span style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Try asking:</span>
-            <button type="button" class="example-question-pill" data-q="i'm in a bad mood">🌧️ I'm in a bad mood</button>
-            <button type="button" class="example-question-pill" data-q="i want some philosophical japanese books">🗾 Philosophical Japanese books</button>
-            <button type="button" class="example-question-pill" data-q="books about procrastination and habit formation">⏳ Procrastination & habits</button>
-            <button type="button" class="example-question-pill" data-q="i need books on organizing and simple living">🧹 Organizing & simple living</button>
-            <button type="button" class="example-question-pill" data-q="books on stoicism, peace of mind, and solitude">🕊️ Stoicism & peace of mind</button>
+          <div class="advisor-input-box" style="margin: 1rem 0;">
+            <div style="display:flex; gap:0.5rem;">
+              <input type="text" id="advisorQuestionInput" placeholder="Describe your mood, situation, or what you want to read..." style="flex:1; font-size:0.95rem; padding:0.75rem 1rem; border:1px solid #cbd5e1; border-radius:8px;">
+              <button type="button" class="btn btn-primary" id="btnAskAdvisor" style="padding:0.75rem 1.35rem; font-weight:700;">
+                ✨ Ask Advisor
+              </button>
+            </div>
+
+            <!-- Example Question Pills -->
+            <div style="margin-top:0.85rem; display:flex; flex-wrap:wrap; gap:0.45rem; align-items:center;">
+              <span style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Try asking:</span>
+              <button type="button" class="example-question-pill" data-q="i'm in a bad mood">🌧️ I'm in a bad mood</button>
+              <button type="button" class="example-question-pill" data-q="i want some philosophical japanese books">🗾 Philosophical Japanese books</button>
+              <button type="button" class="example-question-pill" data-q="books about procrastination and habit formation">⏳ Procrastination & habits</button>
+              <button type="button" class="example-question-pill" data-q="i need books on organizing and simple living">🧹 Organizing & simple living</button>
+              <button type="button" class="example-question-pill" data-q="books on stoicism, peace of mind, and solitude">🕊️ Stoicism & peace of mind</button>
+            </div>
+          </div>
+
+          <!-- AI Advisor Response / Summary Banner -->
+          <div id="advisorSummaryBanner" style="display:none;" class="advisor-summary-card">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+              <span style="font-size:1.3rem;">💡</span>
+              <h4 id="advisorSummaryTitle" style="margin:0; font-size:1rem; color:#1e293b; font-weight:800;">Advisor Insights</h4>
+            </div>
+            <p id="advisorSummaryText" style="margin:0; font-size:0.92rem; color:#334155; line-height:1.55;"></p>
+          </div>
+
+          <!-- Recommended Books Container -->
+          <div id="advisorResultsContainer">
+            <div class="empty-prompt">
+              <div class="prompt-icon">💡</div>
+              <h3>Looking for Book Recommendations?</h3>
+              <p>Tell the advisor what kind of book you want or select an example above to get instant personalized recommendations from our inventory.</p>
+            </div>
           </div>
         </div>
+      </section>
 
-        <!-- AI Advisor Response / Summary Banner -->
-        <div id="advisorSummaryBanner" style="display:none;" class="advisor-summary-card">
-          <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
-            <span style="font-size:1.3rem;">💡</span>
-            <h4 id="advisorSummaryTitle" style="margin:0; font-size:1rem; color:#1e293b; font-weight:800;">Advisor Insights</h4>
-          </div>
-          <p id="advisorSummaryText" style="margin:0; font-size:0.92rem; color:#334155; line-height:1.55;"></p>
-        </div>
+    </main>
+  </div>
 
-        <!-- Recommended Books Container -->
-        <div id="advisorResultsContainer">
-          <div class="empty-prompt">
-            <div class="prompt-icon">💡</div>
-            <h3>Looking for Book Recommendations?</h3>
-            <p>Tell the advisor what kind of book you want or select an example above to get instant personalized recommendations from our inventory.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+  <footer style="text-align: center; padding: 2.5rem 1rem; color: #64748b; font-size: 0.85rem; border-top: 1px solid #e2e8f0; margin-top: 3rem; background: #ffffff;">
+    <p style="margin: 0 0 0.5rem; font-weight: 700; color: #1e293b;">🔖 Book Mark &bull; Independent Bookstore &bull; Gachibowli, Hyderabad</p>
+    <p style="margin: 0;">Phone &amp; WhatsApp: <a href="https://wa.me/919885098466" target="_blank" style="color: #059669; font-weight: 700; text-decoration: none;">+91 9885098466</a> &bull; <a href="https://share.google/9f0DC5AfQumkLCsp4" target="_blank" style="color: #4f46e5; text-decoration: none;">Google Maps &amp; Reviews</a></p>
+  </footer>
 
-  </main>
-
-  <script src="/app.js?v=4.8"></script>
+  <script src="/app.js?v=5.0"></script>
 </body>
 </html>
