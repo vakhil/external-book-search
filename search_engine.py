@@ -49,12 +49,103 @@ def get_all_books_cached(force_refresh: bool = False) -> List[Dict[str, Any]]:
     if not force_refresh and _CACHE_BOOKS is not None and (now - _CACHE_TIMESTAMP < _CACHE_TTL):
         return _CACHE_BOOKS
 
+    # FAST PATH FOR TURSO CLOUD: Direct pipeline query with gzip compression bypasses slow ORM parsing
+    turso_url = os.environ.get("TURSO_DATABASE_URL", "").strip()
+    turso_token = os.environ.get("TURSO_AUTH_TOKEN", "").strip()
+    if turso_url and turso_token:
+        try:
+            import urllib.request, gzip
+            pipeline_url = turso_url
+            if pipeline_url.startswith("libsql://"):
+                pipeline_url = "https://" + pipeline_url[len("libsql://"):]
+            if not pipeline_url.endswith("/v2/pipeline"):
+                pipeline_url = pipeline_url.rstrip("/") + "/v2/pipeline"
+
+            req_payload = json.dumps({
+                "requests": [
+                    {
+                        "type": "execute",
+                        "stmt": {"sql": "SELECT id, book_id, title, author, genre, simple_genre, rack, column_num, position, location_english, status, selling_price, notes FROM books"}
+                    },
+                    {"type": "close"}
+                ]
+            }).encode("utf-8")
+
+            req = urllib.request.Request(
+                pipeline_url,
+                data=req_payload,
+                headers={
+                    "Authorization": f"Bearer {turso_token}",
+                    "Content-Type": "application/json",
+                    "Accept-Encoding": "gzip, deflate"
+                }
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                raw_bytes = resp.read()
+                if "gzip" in resp.headers.get("Content-Encoding", "").lower():
+                    raw_bytes = gzip.decompress(raw_bytes)
+                p_data = json.loads(raw_bytes.decode("utf-8"))
+
+            res = p_data["results"][0]["response"]["result"]
+            col_names = [c["name"] for c in res["cols"]]
+            raw_rows = res["rows"]
+
+            indexed_books = []
+            inv_words = {}
+            id_map = {}
+
+            for idx, r in enumerate(raw_rows):
+                b = {}
+                for c_i, col in enumerate(col_names):
+                    c_cell = r[c_i]
+                    b[col] = c_cell.get("value") if (c_cell and isinstance(c_cell, dict)) else None
+
+                t = b.get("title") or ""
+                a = b.get("author") or ""
+                bid = b.get("book_id") or ""
+
+                nt = normalize_text(t)
+                na = normalize_text(a)
+                tw = tuple(nt.split())
+                aw = tuple(na.split())
+                cw = tw + aw
+
+                b["_nt"] = nt
+                b["_na"] = na
+                b["_tw"] = tw
+                b["_aw"] = aw
+                b["_cw"] = cw
+                b["_tws"] = frozenset(tw)
+                b["_aws"] = frozenset(aw)
+                b["_cws"] = frozenset(cw)
+                b["_id"] = bid.upper()
+                indexed_books.append(b)
+
+                if bid:
+                    ub = bid.upper()
+                    if ub not in id_map:
+                        id_map[ub] = []
+                    id_map[ub].append(idx)
+
+                for w in cw:
+                    if w not in inv_words:
+                        inv_words[w] = []
+                    inv_words[w].append(idx)
+
+            _CACHE_BOOKS = indexed_books
+            _INVERTED_WORDS = inv_words
+            _ID_MAP = id_map
+            _CACHE_TIMESTAMP = now
+            return _CACHE_BOOKS
+        except Exception as e:
+            print(f"Notice: Turso fast path fell back to standard cursor ({e})")
+
+    # Standard cursor path
     conn = database.get_db_connection()
     cursor = conn.cursor()
-    # Select only columns needed for search to reduce network transfer payload by >60%
     cursor.execute("""
         SELECT id, book_id, title, author, genre, simple_genre, rack, column_num, position,
-               location_english, status, selling_price, notes, language, image_url
+               location_english, status, selling_price, notes
         FROM books
     """)
     rows = cursor.fetchall()
@@ -68,33 +159,26 @@ def get_all_books_cached(force_refresh: bool = False) -> List[Dict[str, Any]]:
         b = dict(r)
         nt = normalize_text(b.get("title") or "")
         na = normalize_text(b.get("author") or "")
-        nc = f"{nt} {na}"
         tw = tuple(nt.split())
         aw = tuple(na.split())
-        cw = tuple(nc.split())
+        cw = tw + aw
         b["_nt"] = nt
         b["_na"] = na
-        b["_nc"] = nc
         b["_tw"] = tw
         b["_aw"] = aw
         b["_cw"] = cw
         b["_tws"] = frozenset(tw)
         b["_aws"] = frozenset(aw)
         b["_cws"] = frozenset(cw)
-        b["_ng"] = normalize_text(b.get("genre") or "")
-        b["_ns"] = normalize_text(b.get("simple_genre") or "")
-        b["_nn"] = normalize_text(b.get("notes") or "")
         b["_id"] = (b.get("book_id") or "").upper()
         indexed_books.append(b)
 
-        # Index book_id
         if b["_id"]:
             if b["_id"] not in id_map:
                 id_map[b["_id"]] = []
             id_map[b["_id"]].append(idx)
 
-        # Index words for sub-millisecond candidate lookup
-        for w in b["_cws"]:
+        for w in cw:
             if w not in inv_words:
                 inv_words[w] = []
             inv_words[w].append(idx)
