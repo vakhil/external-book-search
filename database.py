@@ -700,6 +700,12 @@ def ensure_database_ready():
     if _DB_IS_VERIFIED:
         return
     try:
+        # If Turso Cloud is in use, the cloud database is already verified, migrated, and maintained.
+        # Skip heavy local SQLite migration & batch sanitization queries on serverless cold starts.
+        if _USE_TURSO:
+            _DB_IS_VERIFIED = True
+            return
+
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='books'")
