@@ -679,6 +679,14 @@ async function loadGenreTab() {
     if (!select || !data.genres) return;
 
     availableGenresList = data.genres || [];
+    // Ensure Manga is always at the top of the list as requested
+    availableGenresList.sort((a, b) => {
+      const aIsManga = (a.simple_genre || '').toLowerCase() === 'manga';
+      const bIsManga = (b.simple_genre || '').toLowerCase() === 'manga';
+      if (aIsManga && !bIsManga) return -1;
+      if (!aIsManga && bIsManga) return 1;
+      return (b.total_copies || 0) - (a.total_copies || 0);
+    });
     select.innerHTML = '<option value="">-- Choose a Single Genre --</option>';
     if (pillsWrap) pillsWrap.innerHTML = '';
 

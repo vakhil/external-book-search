@@ -2693,7 +2693,7 @@ def get_genre_distribution(force_refresh: bool = False) -> List[Dict[str, Any]]:
         FROM books
         WHERE simple_genre != '' AND simple_genre IS NOT NULL
         GROUP BY simple_genre
-        ORDER BY total_copies DESC
+        ORDER BY CASE WHEN lower(simple_genre) = 'manga' THEN 0 ELSE 1 END, total_copies DESC
     """)
     rows = [dict(r) for r in cursor.fetchall()]
     conn.close()
