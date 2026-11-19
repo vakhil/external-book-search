@@ -10,6 +10,8 @@ author search, niche genre and semantic topic expansion, and 3-tier result group
 import re
 import difflib
 import time
+import os
+import json
 from typing import Dict, List, Any, Tuple, Optional
 import database
 

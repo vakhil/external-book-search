@@ -694,6 +694,9 @@ def migrate_database_schema(conn: sqlite3.Connection):
 
 _DB_IS_VERIFIED = False
 
+def is_turso_enabled():
+    return bool(os.environ.get("TURSO_DATABASE_URL", "").strip() and os.environ.get("TURSO_AUTH_TOKEN", "").strip())
+
 def ensure_database_ready():
     """Verifies books exist; if empty or missing, initializes and seeds from CSV or Google Sheet."""
     global _DB_IS_VERIFIED
@@ -702,7 +705,7 @@ def ensure_database_ready():
     try:
         # If Turso Cloud is in use, the cloud database is already verified, migrated, and maintained.
         # Skip heavy local SQLite migration & batch sanitization queries on serverless cold starts.
-        if _USE_TURSO:
+        if is_turso_enabled():
             _DB_IS_VERIFIED = True
             return
 
