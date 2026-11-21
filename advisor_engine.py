@@ -149,36 +149,44 @@ def get_book_summary(title: str, author: str = "", book_id: str = "") -> str:
     if api_key and clean_t:
         try:
             prompt = f"""You are an expert literary curator and book editor.
-Below is the baseline factual background for "{clean_t}" by {clean_a or 'Unknown Author'}:
-"{base_summary}"
+Book: "{clean_t}" by {clean_a or 'Unknown Author'}
+Baseline notes: "{base_summary}"
 
 Task:
-Extract and synthesize an engaging, comprehensive synopsis of this book combining the editorial styles found on Goodreads, Amazon, and leading literary publications.
-Length requirement: Strictly between 150 and 400 words (do NOT make it shorter than 150 words).
+Write an engaging, high quality, in-depth synopsis of this book combining the editorial styles found on Goodreads, Amazon, and leading literary publications.
+Length requirement: Strictly between 150 and 350 words (do NOT make it shorter than 150 words).
 
 Cover:
-1. Core Premise & Narrative / Conceptual Framework: Central conflict, setting, main characters or core thesis.
+1. Core Premise & Narrative / Conceptual Framework: Central conflict, setting, main thesis, or key concepts.
 2. Thematic Depth & Key Insights: Deep themes, practical takeaways, or philosophical questions explored.
-3. Emotional Resonance & Reader Appeal: Why readers on Goodreads and Amazon recommend it, its tone, and who should read it.
+3. Emotional Resonance & Reader Appeal: Tone, why readers on Goodreads/Amazon love it, and who should read it.
 
-Write in clear, fluid paragraphs. Ensure the word count is between 150 and 400 words."""
+Rules:
+- Do NOT include author biographical trivia (e.g. do not say "The author was born in...", "is a nephrologist...", etc.).
+- Focus entirely on the book itself.
+- Write in clear, elegant, fluid paragraphs."""
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={api_key}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.3}
-            }
-            req = urllib.request.Request(
-                url,
-                data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
-            )
-            with urllib.request.urlopen(req, timeout=12) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-                word_count = len(text.split())
-                if word_count >= 140:
-                    hybrid_summary = text
+            for model_name in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]:
+                try:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+                    payload = {
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {"temperature": 0.3}
+                    }
+                    req = urllib.request.Request(
+                        url,
+                        data=json.dumps(payload).encode("utf-8"),
+                        headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
+                    )
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        data = json.loads(resp.read().decode("utf-8"))
+                        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        word_count = len(text.split())
+                        if word_count >= 130:
+                            hybrid_summary = text
+                            break
+                except Exception:
+                    continue
         except Exception as e:
             print(f"Notice generating 150-400 word synopsis: {e}")
 

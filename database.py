@@ -2977,8 +2977,59 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
         "Accept": "application/json,text/plain,*/*"
     }
 
-    # Step 2: Try direct Wikipedia REST summary API
+    # Step 2: Try OpenLibrary API (mirrors Goodreads & publisher book synopses)
     if clean_title:
+        try:
+            ol_q = f"title={urllib.parse.quote(clean_title)}"
+            if clean_author:
+                ol_q += f"&author={urllib.parse.quote(clean_author)}"
+            ol_url = f"https://openlibrary.org/search.json?{ol_q}&limit=2"
+            ol_req = urllib.request.Request(ol_url, headers={"User-Agent": "BookmarkApp/1.0 (info@bookmarkapp.org)"})
+            with urllib.request.urlopen(ol_req, timeout=3.5) as resp:
+                data = json.loads(resp.read().decode("utf-8", errors="replace"))
+                docs = data.get("docs", [])
+                for doc in docs:
+                    work_key = doc.get("key")
+                    if not work_key:
+                        continue
+                    w_url = f"https://openlibrary.org{work_key}.json"
+                    w_req = urllib.request.Request(w_url, headers={"User-Agent": "BookmarkApp/1.0"})
+                    with urllib.request.urlopen(w_req, timeout=3.5) as w_resp:
+                        w_data = json.loads(w_resp.read().decode("utf-8", errors="replace"))
+                        desc = w_data.get("description", "")
+                        if isinstance(desc, dict):
+                            desc = desc.get("value", "")
+                        if desc and len(desc.strip().split()) >= 35 and not _is_invalid_summary(desc):
+                            # Strip markdown artifacts
+                            clean_ol = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", desc)
+                            clean_ol = re.sub(r"-----+\s*", "", clean_ol).strip()
+                            summary_text = clean_ol
+                            break
+                    if summary_text:
+                        break
+        except Exception:
+            pass
+
+    # Step 3: Try Google Books volume description
+    if not summary_text and clean_title:
+        try:
+            gb_q = urllib.parse.quote(f'intitle:"{clean_title}"')
+            gb_url = f"https://www.googleapis.com/books/v1/volumes?q={gb_q}&maxResults=1"
+            req = urllib.request.Request(gb_url, headers=req_headers)
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                data = json.loads(resp.read().decode("utf-8", errors="replace"))
+                items = data.get("items", [])
+                if items:
+                    desc = items[0].get("volumeInfo", {}).get("description", "")
+                    if desc:
+                        clean_desc = re.sub(r'<[^>]+>', '', desc).strip()
+                        if len(clean_desc) > 30 and not _is_invalid_summary(clean_desc):
+                            summary_text = clean_desc
+        except Exception:
+            pass
+
+    # Step 4: Try direct Wikipedia REST summary API
+    if not summary_text and clean_title:
         try:
             slug = urllib.parse.quote(clean_title.replace(" ", "_"))
             wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{slug}"
@@ -2991,7 +3042,7 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
         except Exception:
             pass
 
-    # Step 3: Try Wikipedia Search with '(book)' / '(novel)' qualifier
+    # Step 5: Try Wikipedia Search with '(book)' / '(novel)' qualifier
     if not summary_text and clean_title:
         search_queries = [
             f"{clean_title} (book)",
@@ -3020,24 +3071,6 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
                                     break
             except Exception:
                 pass
-
-    # Step 4: Try Google Books volume description
-    if not summary_text and clean_title:
-        try:
-            gb_q = urllib.parse.quote(f'intitle:"{clean_title}"')
-            gb_url = f"https://www.googleapis.com/books/v1/volumes?q={gb_q}&maxResults=1"
-            req = urllib.request.Request(gb_url, headers=req_headers)
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
-                data = json.loads(resp.read().decode("utf-8", errors="replace"))
-                items = data.get("items", [])
-                if items:
-                    desc = items[0].get("volumeInfo", {}).get("description", "")
-                    if desc:
-                        clean_desc = re.sub(r'<[^>]+>', '', desc).strip()
-                        if len(clean_desc) > 30:
-                            summary_text = clean_desc
-        except Exception:
-            pass
 
     # Step 5: High-quality contextual fallback synopsis
     if not summary_text:
