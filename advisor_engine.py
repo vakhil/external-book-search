@@ -50,7 +50,7 @@ def _get_api_key() -> str:
             except Exception:
                 pass
     # Fallback to configured active Google Gemini key
-    return "AIzaSyBfJXZ1Z9wOmB_MVEiwkxG3RdQJkllcjIA"
+    return ""
 
 def load_summaries_into_ram():
     """Pre-warms the 300-400 word summaries into RAM for 0ms lookup."""

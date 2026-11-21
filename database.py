@@ -3045,10 +3045,16 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
     # Step 5: Try Wikipedia Search with '(book)' / '(novel)' qualifier
     if not summary_text and clean_title:
         search_queries = [
-            f"{clean_title} (book)",
-            f"{clean_title} (novel)",
-            f"{clean_title} book {clean_author}".strip()
+            f'"{clean_title}" {clean_author} book'.strip(),
+            f'"{clean_title}" (book)',
+            f'"{clean_title}" (novel)'
         ]
+        non_book_indicators = [
+            "(game)", "(video game)", "(film)", "(soundtrack)", "(album)", "(song)",
+            "(tv series)", "(season", "(episode", "bandai namco", "nintendo", "playstation", "xbox"
+        ]
+        clean_words = set(w for w in clean_title.lower().split() if len(w) > 3)
+
         for sq in search_queries:
             try:
                 q = urllib.parse.quote(sq)
@@ -3058,8 +3064,15 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
                     data = json.loads(resp.read().decode("utf-8", errors="replace"))
                     results = data.get("query", {}).get("search", [])
                     if results:
-                        found_page = results[0].get("title", "")
-                        if found_page:
+                        for item in results[:3]:
+                            found_page = item.get("title", "")
+                            fp_low = found_page.lower()
+                            # Disqualify video games, movies, and unverified titles
+                            if any(nb in fp_low for nb in non_book_indicators):
+                                continue
+                            if clean_words and not any(w in fp_low for w in clean_words):
+                                continue
+
                             fslug = urllib.parse.quote(found_page.replace(" ", "_"))
                             furl = f"https://en.wikipedia.org/api/rest_v1/page/summary/{fslug}"
                             freq = urllib.request.Request(furl, headers=req_headers)
@@ -3069,6 +3082,8 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
                                 if fext and not _is_invalid_summary(fext):
                                     summary_text = fext.strip()
                                     break
+                        if summary_text:
+                            break
             except Exception:
                 pass
 
