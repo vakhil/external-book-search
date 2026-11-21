@@ -561,10 +561,11 @@ function createBookTile(book, copy, matchType) {
   const coverHtml = getBookCoverHtml(cleanTitle, copy.author || book.author, genre, copy.image_url || book.image_url);
   const bookId = copy.book_id || book.book_id || '';
   const language = copy.language || book.language || 'English';
-  const sellingPrice = (copy.selling_price !== null && copy.selling_price !== undefined && copy.selling_price !== '') ? copy.selling_price : (book.selling_price || '');
-  const existingSummary = copy.summary || book.summary || bookSummaryCache.get(cleanTitle.toLowerCase()) || '';
-
   const isExt = Boolean(copy.is_external || book.is_external || (copy.notes && copy.notes.includes('Distributor Stock')));
+  const rawPrice = (copy.selling_price !== null && copy.selling_price !== undefined && copy.selling_price !== '') ? copy.selling_price : (book.selling_price || '');
+  // Do NOT display price for external distributor books on the external website UI
+  const sellingPrice = isExt ? '' : rawPrice;
+  const existingSummary = copy.summary || book.summary || bookSummaryCache.get(cleanTitle.toLowerCase()) || '';
   // Keep title completely clean for external visitors (no asterisk or distributor mention)
   const displayTitle = cleanTitle;
   // Discreet indicator for bookstore owners: a tiny amber dot inside the language chip (title="1h")

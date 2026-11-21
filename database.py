@@ -3044,27 +3044,7 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
         author_phrase = f"by {clean_author}" if clean_author else "from curated collections"
         summary_text = f'"{clean_title}" {author_phrase} is a featured work in the Bookmark collection. Explore its chapters and themes to discover valuable insights and literary narrative.'
 
-    # Step 6: Persist summary into database as a one-time activity
-    if summary_text:
-        try:
-            with db_lock:
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                if clean_title:
-                    cursor.execute(
-                        "UPDATE books SET summary = ? WHERE lower(title) = ?",
-                        (summary_text, clean_title.lower())
-                    )
-                if clean_bid:
-                    cursor.execute(
-                        "UPDATE books SET summary = ? WHERE book_id = ?",
-                        (summary_text, clean_bid)
-                    )
-                conn.commit()
-                conn.close()
-        except Exception as e:
-            print(f"Notice saving book summary to DB: {e}")
-
+    # Step 6: Do not persist to database; return live fetched synopsis directly
     return summary_text
 
 def get_random_empty_locations(count: int = 1, exclude_locations: Optional[List[Tuple[int, int, int]]] = None) -> List[Dict[str, int]]:

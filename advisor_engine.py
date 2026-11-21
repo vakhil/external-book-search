@@ -185,7 +185,7 @@ Write in clear, fluid paragraphs. Ensure the word count is between 150 and 400 w
     # Fallback to base summary if model is offline
     final_summary = hybrid_summary or base_summary
 
-    # 5. Persist to RAM cache and SQLite DB
+    # Cache in RAM only; do NOT write or mutate database
     if final_summary and clean_t:
         with _CACHE_LOCK:
             _SUMMARIES_CACHE[nt] = {
@@ -193,17 +193,6 @@ Write in clear, fluid paragraphs. Ensure the word count is between 150 and 400 w
                 "author": clean_a,
                 "summary": final_summary
             }
-        try:
-            with database.db_lock:
-                conn = database.get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute("UPDATE books SET summary = ? WHERE lower(title) = ?", (final_summary, nt))
-                if clean_bid:
-                    cursor.execute("UPDATE books SET summary = ? WHERE book_id = ?", (final_summary, clean_bid))
-                conn.commit()
-                conn.close()
-        except Exception as e:
-            print(f"Notice saving hybrid summary to DB: {e}")
 
     return final_summary
 
