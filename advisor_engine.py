@@ -29,17 +29,28 @@ SUMMARIES_CACHE_PATH = os.path.join(os.path.dirname(__file__), "book_summaries_c
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "google_config.json")
 
 def _get_api_key() -> str:
-    key = os.environ.get("GOOGLE_API_KEY", "").strip()
+    key = (os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")).strip()
     if key:
         return key
-    if os.path.exists(CONFIG_PATH):
-        try:
-            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-                cfg = json.load(f)
-                return cfg.get("google_api_key", "").strip()
-        except Exception:
-            pass
-    return ""
+
+    candidates = [
+        CONFIG_PATH,
+        os.path.join(os.getcwd(), "google_config.json"),
+        "/var/task/google_config.json",
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "google_config.json")
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            try:
+                with open(c, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
+                    k = cfg.get("google_api_key", "").strip()
+                    if k:
+                        return k
+            except Exception:
+                pass
+    # Fallback to configured active Google Gemini key
+    return "AIzaSyBfJXZ1Z9wOmB_MVEiwkxG3RdQJkllcjIA"
 
 def load_summaries_into_ram():
     """Pre-warms the 300-400 word summaries into RAM for 0ms lookup."""
