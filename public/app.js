@@ -564,6 +564,10 @@ function createBookTile(book, copy, matchType) {
   const sellingPrice = (copy.selling_price !== null && copy.selling_price !== undefined && copy.selling_price !== '') ? copy.selling_price : (book.selling_price || '');
   const existingSummary = copy.summary || book.summary || bookSummaryCache.get(cleanTitle.toLowerCase()) || '';
 
+  const isExt = Boolean(copy.is_external || book.is_external || (copy.notes && copy.notes.includes('Distributor Stock')));
+  const displayTitle = isExt ? `${cleanTitle} *` : cleanTitle;
+  const starBadge = isExt ? `<span class="chip" style="background:#fef3c7; color:#92400e; font-weight:700; border:1px solid #fde68a;" title="Available with Distributor — Ready in 1 hour">* In Distributor Stock</span>` : '';
+
   const waInquiryUrl = `https://wa.me/919885098466?text=${encodeURIComponent(`Hi Book Mark! Is "${cleanTitle}" by ${cleanAuthor} available?`)}`;
 
   card.innerHTML = `
@@ -573,13 +577,14 @@ function createBookTile(book, copy, matchType) {
           ${coverHtml}
         </div>
         <div class="book-info">
-          <h3 class="book-title" style="margin: 0 0 0.2rem 0; line-height: 1.3;">${escapeHtml(cleanTitle)}</h3>
+          <h3 class="book-title" style="margin: 0 0 0.2rem 0; line-height: 1.3;">${escapeHtml(displayTitle)}</h3>
           <div class="book-author">
             <span class="author-prefix">by</span>
             <b>${cleanAuthor}</b>
           </div>
           <div class="book-meta-line" style="margin-top: 0.5rem;">
             ${formatAvailabilityBadge(state)}
+            ${starBadge}
             <span class="chip book-lang-chip">🌐 ${escapeHtml(language)}</span>
             ${genre ? `<span class="chip simple-genre-chip">${escapeHtml(genre)}</span>` : ''}
             <button type="button" class="btn-about-book" data-role="toggle-about">

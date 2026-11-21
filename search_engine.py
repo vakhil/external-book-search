@@ -67,7 +67,7 @@ def get_all_books_cached(force_refresh: bool = False) -> List[Dict[str, Any]]:
                 "requests": [
                     {
                         "type": "execute",
-                        "stmt": {"sql": "SELECT id, book_id, title, author, genre, simple_genre, rack, column_num, position, location_english, status, selling_price, notes FROM books"}
+                        "stmt": {"sql": "SELECT id, book_id, title, author, genre, simple_genre, rack, column_num, position, location_english, status, selling_price, notes, is_external FROM books"}
                     },
                     {"type": "close"}
                 ]
@@ -147,7 +147,7 @@ def get_all_books_cached(force_refresh: bool = False) -> List[Dict[str, Any]]:
     cursor = conn.cursor()
     cursor.execute("""
         SELECT id, book_id, title, author, genre, simple_genre, rack, column_num, position,
-               location_english, status, selling_price, notes
+               location_english, status, selling_price, notes, is_external
         FROM books
     """)
     rows = cursor.fetchall()
@@ -328,7 +328,8 @@ def group_physical_copies(books: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "selling_price": b.get("selling_price"),
             "simple_genre": b.get("simple_genre") or "",
             "language": b.get("language") or "English",
-            "summary": b.get("summary") or ""
+            "summary": b.get("summary") or "",
+            "is_external": b.get("is_external", 0)
         })
 
     return list(grouped_map.values())
