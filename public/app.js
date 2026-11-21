@@ -565,8 +565,10 @@ function createBookTile(book, copy, matchType) {
   const existingSummary = copy.summary || book.summary || bookSummaryCache.get(cleanTitle.toLowerCase()) || '';
 
   const isExt = Boolean(copy.is_external || book.is_external || (copy.notes && copy.notes.includes('Distributor Stock')));
-  const displayTitle = isExt ? `${cleanTitle} *` : cleanTitle;
-  const starBadge = isExt ? `<span class="chip" style="background:#fef3c7; color:#92400e; font-weight:700; border:1px solid #fde68a;" title="Available with Distributor — Ready in 1 hour">* In Distributor Stock</span>` : '';
+  // Keep title completely clean for external visitors (no asterisk or distributor mention)
+  const displayTitle = cleanTitle;
+  // Discreet indicator for bookstore owners: a tiny amber dot inside the language chip (title="1h")
+  const secretDot = isExt ? `<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#d97706; margin-left:4px; opacity:0.85;" title="1h"></span>` : '';
 
   const waInquiryUrl = `https://wa.me/919885098466?text=${encodeURIComponent(`Hi Book Mark! Is "${cleanTitle}" by ${cleanAuthor} available?`)}`;
 
@@ -584,8 +586,7 @@ function createBookTile(book, copy, matchType) {
           </div>
           <div class="book-meta-line" style="margin-top: 0.5rem;">
             ${formatAvailabilityBadge(state)}
-            ${starBadge}
-            <span class="chip book-lang-chip">🌐 ${escapeHtml(language)}</span>
+            <span class="chip book-lang-chip">🌐 ${escapeHtml(language)}${secretDot}</span>
             ${genre ? `<span class="chip simple-genre-chip">${escapeHtml(genre)}</span>` : ''}
             <button type="button" class="btn-about-book" data-role="toggle-about">
               <span>📖</span> About the book ▾
@@ -663,8 +664,14 @@ function createBookTile(book, copy, matchType) {
 
 function createBookCard(bookGroup, matchType) {
   const fragment = document.createDocumentFragment();
-  const copies = (bookGroup.copies && bookGroup.copies.length > 0) ? bookGroup.copies : [bookGroup];
-  copies.forEach(copy => {
+  const allCopies = (bookGroup.copies && bookGroup.copies.length > 0) ? bookGroup.copies : [bookGroup];
+
+  // If the book has physical copies in store (is_external == 0), prioritize displaying the store copies.
+  // Do not repeat duplicate distributor copies if the store already has it.
+  const storeCopies = allCopies.filter(c => !c.is_external || c.is_external == 0);
+  const displayCopies = storeCopies.length > 0 ? storeCopies : [allCopies[0]];
+
+  displayCopies.forEach(copy => {
     fragment.appendChild(createBookTile(bookGroup, copy, matchType));
   });
   return fragment;

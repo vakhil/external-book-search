@@ -280,16 +280,41 @@ def group_physical_copies(books: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Groups physical book rows by title & author.
     Shows total copies, available count, and individual physical copy details.
+    Smartly deduplicates identical titles between store copies and distributor records.
     """
-    grouped_map = {}
+    def _title_clean_key(t: str) -> str:
+        clean = database.sanitize_title(t or "")
+        nt = normalize_text(clean)
+        return re.sub(r"[^a-z0-9]", "", nt)
+
+    def _author_tokens(a: str) -> set:
+        na = normalize_text(a or "")
+        return set(p for p in re.sub(r"[^a-z0-9\s]", " ", na).split() if len(p) >= 3 and p not in ("dr", "mr", "ms", "mrs", "prof", "the", "and"))
+
+    groups = []
+    title_index = {}  # _title_clean_key -> list of group dicts
+
     for b in books:
         clean_title = database.sanitize_title(b["title"])
-        # Key on normalized title and author
-        key = (b.get("_nt") or normalize_text(clean_title), b.get("_na") or normalize_text(b["author"]))
-        if key not in grouped_map:
-            grouped_map[key] = {
+        tk = _title_clean_key(clean_title)
+        at = _author_tokens(b.get("author") or "")
+        is_ext = int(b.get("is_external") or 0)
+
+        target_group = None
+        if tk in title_index:
+            for grp in title_index[tk]:
+                grp_at = grp["_author_tokens"]
+                # Match if title key matches and (no author tokens or shared author token)
+                if not at or not grp_at or at.intersection(grp_at):
+                    target_group = grp
+                    break
+
+        if target_group is None:
+            target_group = {
                 "title": clean_title,
                 "author": b["author"],
+                "_author_tokens": at,
+                "_title_key": tk,
                 "genre": b["genre"],
                 "simple_genre": b.get("simple_genre") or "",
                 "language": b.get("language", "English"),
@@ -300,21 +325,28 @@ def group_physical_copies(books: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "sold_copies": 0,
                 "copies": []
             }
+            groups.append(target_group)
+            title_index.setdefault(tk, []).append(target_group)
 
-        if not grouped_map[key]["image_url"] and b.get("image_url"):
-            grouped_map[key]["image_url"] = b["image_url"]
-        if not grouped_map[key]["summary"] and b.get("summary"):
-            grouped_map[key]["summary"] = b["summary"]
+        # Prefer properly cased / non-all-caps title and author
+        if target_group["title"].isupper() and not clean_title.isupper():
+            target_group["title"] = clean_title
+            target_group["author"] = b["author"]
 
-        grouped_map[key]["total_copies"] += 1
+        if not target_group.get("image_url") and b.get("image_url"):
+            target_group["image_url"] = b["image_url"]
+        if not target_group.get("summary") and b.get("summary"):
+            target_group["summary"] = b["summary"]
+
+        target_group["total_copies"] += 1
         if b["status"] == "Available":
-            grouped_map[key]["available_copies"] += 1
+            target_group["available_copies"] += 1
         elif b["status"] == "SOLD OUT":
-            grouped_map[key]["sold_copies"] += 1
+            target_group["sold_copies"] += 1
 
         raw_notes = b.get("notes") or ""
         clean_notes = re.sub(r"\[idempotency:[^\]]+\]", "", raw_notes).strip() if "[" in raw_notes else raw_notes
-        grouped_map[key]["copies"].append({
+        target_group["copies"].append({
             "id": b["id"],
             "book_id": b["book_id"],
             "title": clean_title,
@@ -329,10 +361,17 @@ def group_physical_copies(books: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "simple_genre": b.get("simple_genre") or "",
             "language": b.get("language") or "English",
             "summary": b.get("summary") or "",
-            "is_external": b.get("is_external", 0)
+            "is_external": is_ext
         })
 
-    return list(grouped_map.values())
+    # Cleanup temporary matching keys
+    for g in groups:
+        if "_author_tokens" in g:
+            del g["_author_tokens"]
+        if "_title_key" in g:
+            del g["_title_key"]
+
+    return groups
 
 def search_books(
     query: str,
