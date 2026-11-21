@@ -51,6 +51,59 @@ def get_all_books_cached(force_refresh: bool = False) -> List[Dict[str, Any]]:
     if not force_refresh and _CACHE_BOOKS is not None and (now - _CACHE_TIMESTAMP < _CACHE_TTL):
         return _CACHE_BOOKS
 
+    # FAST PATH 0: Local pre-baked snapshot for instant sub-300ms serverless cold boots
+    snapshot_path = os.path.join(os.path.dirname(__file__), "books_snapshot.pkl.gz")
+    if not force_refresh and os.path.exists(snapshot_path):
+        try:
+            import gzip, pickle
+            with gzip.open(snapshot_path, "rb") as f:
+                raw_rows = pickle.load(f)
+
+            indexed_books = []
+            inv_words = {}
+            id_map = {}
+
+            for idx, b in enumerate(raw_rows):
+                t = b.get("title") or ""
+                a = b.get("author") or ""
+                bid = b.get("book_id") or ""
+
+                nt = normalize_text(t)
+                na = normalize_text(a)
+                tw = tuple(nt.split())
+                aw = tuple(na.split())
+                cw = tw + aw
+
+                b["_nt"] = nt
+                b["_na"] = na
+                b["_tw"] = tw
+                b["_aw"] = aw
+                b["_cw"] = cw
+                b["_tws"] = frozenset(tw)
+                b["_aws"] = frozenset(aw)
+                b["_cws"] = frozenset(cw)
+                b["_id"] = bid.upper()
+                indexed_books.append(b)
+
+                if bid:
+                    ub = bid.upper()
+                    if ub not in id_map:
+                        id_map[ub] = []
+                    id_map[ub].append(idx)
+
+                for w in cw:
+                    if w not in inv_words:
+                        inv_words[w] = []
+                    inv_words[w].append(idx)
+
+            _CACHE_BOOKS = indexed_books
+            _INVERTED_WORDS = inv_words
+            _ID_MAP = id_map
+            _CACHE_TIMESTAMP = now
+            return _CACHE_BOOKS
+        except Exception as e:
+            print(f"Notice: books_snapshot load fell back to live query ({e})")
+
     # FAST PATH FOR TURSO CLOUD: Direct pipeline query with gzip compression bypasses slow ORM parsing
     turso_url = os.environ.get("TURSO_DATABASE_URL", "").strip()
     turso_token = os.environ.get("TURSO_AUTH_TOKEN", "").strip()
