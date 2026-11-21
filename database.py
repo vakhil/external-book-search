@@ -2919,6 +2919,26 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
     if not clean_title and not clean_bid:
         return ""
 
+    def _is_invalid_summary(txt: str) -> bool:
+        if not txt or len(txt.strip()) < 80:
+            return True
+        low = txt.lower().strip()
+        first_35 = " ".join(low.split()[:35])
+        # Reject author biographical snippets
+        bio_indicators = [
+            "is an author", "is a canadian", "is an american", "is an english", "is a british",
+            "is an indian", "is a japanese", "is a writer", "is a physician", "is a nephrologist",
+            "is a psychologist", "is a journalist", "is a professor", "is an entrepreneur",
+            "was an american", "was a canadian", "was an english", "was a british", "was an indian",
+            "was an author", "was a writer", "born in", "born on", "graduated from"
+        ]
+        if any(b in first_35 for b in bio_indicators) and not any(k in first_35 for k in ["book", "novel", "published", "work", "memoir", "treatise"]):
+            return True
+        # Reject dictionary definition extracts
+        if low.startswith("an alchemist is") or "may refer to:" in low:
+            return True
+        return False
+
     # Step 1: Check database cache first
     try:
         conn = get_db_connection()
@@ -2926,7 +2946,7 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
         if clean_bid:
             cursor.execute("SELECT summary, title, author FROM books WHERE book_id = ? LIMIT 1", (clean_bid,))
             row = cursor.fetchone()
-            if row and row["summary"]:
+            if row and row["summary"] and not _is_invalid_summary(row["summary"]):
                 cached = row["summary"].strip()
                 conn.close()
                 return cached
@@ -2941,7 +2961,7 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
                 (clean_title.lower(),)
             )
             row = cursor.fetchone()
-            if row and row["summary"]:
+            if row and row["summary"] and not _is_invalid_summary(row["summary"]):
                 cached = row["summary"].strip()
                 conn.close()
                 return cached
@@ -2953,7 +2973,7 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
     import urllib.request, urllib.parse, json, re
 
     req_headers = {
-        "User-Agent": "BookmarkBookstore/1.0 (contact@bookmark.com; book inventory assistant)",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json,text/plain,*/*"
     }
 
@@ -2966,33 +2986,40 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
             with urllib.request.urlopen(req, timeout=3.0) as resp:
                 data = json.loads(resp.read().decode("utf-8", errors="replace"))
                 extract = data.get("extract", "")
-                if extract and len(extract) > 40 and "may refer to:" not in extract:
+                if extract and not _is_invalid_summary(extract):
                     summary_text = extract.strip()
         except Exception:
             pass
 
-    # Step 3: Try Wikipedia Search to find exact article title
+    # Step 3: Try Wikipedia Search with '(book)' / '(novel)' qualifier
     if not summary_text and clean_title:
-        try:
-            q = urllib.parse.quote(f"{clean_title} {clean_author}".strip())
-            search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={q}&format=json&utf8="
-            req = urllib.request.Request(search_url, headers=req_headers)
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
-                data = json.loads(resp.read().decode("utf-8", errors="replace"))
-                results = data.get("query", {}).get("search", [])
-                if results:
-                    found_page = results[0].get("title", "")
-                    if found_page:
-                        fslug = urllib.parse.quote(found_page.replace(" ", "_"))
-                        furl = f"https://en.wikipedia.org/api/rest_v1/page/summary/{fslug}"
-                        freq = urllib.request.Request(furl, headers=req_headers)
-                        with urllib.request.urlopen(freq, timeout=3.0) as fresp:
-                            fdata = json.loads(fresp.read().decode("utf-8", errors="replace"))
-                            fext = fdata.get("extract", "")
-                            if fext and len(fext) > 40 and "may refer to:" not in fext:
-                                summary_text = fext.strip()
-        except Exception:
-            pass
+        search_queries = [
+            f"{clean_title} (book)",
+            f"{clean_title} (novel)",
+            f"{clean_title} book {clean_author}".strip()
+        ]
+        for sq in search_queries:
+            try:
+                q = urllib.parse.quote(sq)
+                search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={q}&format=json&utf8="
+                req = urllib.request.Request(search_url, headers=req_headers)
+                with urllib.request.urlopen(req, timeout=3.0) as resp:
+                    data = json.loads(resp.read().decode("utf-8", errors="replace"))
+                    results = data.get("query", {}).get("search", [])
+                    if results:
+                        found_page = results[0].get("title", "")
+                        if found_page:
+                            fslug = urllib.parse.quote(found_page.replace(" ", "_"))
+                            furl = f"https://en.wikipedia.org/api/rest_v1/page/summary/{fslug}"
+                            freq = urllib.request.Request(furl, headers=req_headers)
+                            with urllib.request.urlopen(freq, timeout=3.0) as fresp:
+                                fdata = json.loads(fresp.read().decode("utf-8", errors="replace"))
+                                fext = fdata.get("extract", "")
+                                if fext and not _is_invalid_summary(fext):
+                                    summary_text = fext.strip()
+                                    break
+            except Exception:
+                pass
 
     # Step 4: Try Google Books volume description
     if not summary_text and clean_title:
