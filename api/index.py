@@ -93,7 +93,10 @@ def _app_dispatch(environ, start_response):
 
     # 1. GET Endpoints
     if method == "GET":
-        if path == "/api/search":
+        if path == "/api/version":
+            return json_response(start_response, {"version": "v2.5-synopsis-live", "commit": "d24a88f", "time": 1732200000})
+
+        elif path == "/api/search":
             q = query_params.get("q", [""])[0]
             stype = query_params.get("type", ["title"])[0]
             include_sold = query_params.get("include_sold", ["false"])[0].lower() in ("true", "1")
