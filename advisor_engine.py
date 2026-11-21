@@ -187,9 +187,13 @@ Rules:
                     req = urllib.request.Request(
                         url,
                         data=json.dumps(payload).encode("utf-8"),
-                        headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
+                        headers={
+                            "Content-Type": "application/json",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                            "x-goog-api-key": api_key
+                        }
                     )
-                    with urllib.request.urlopen(req, timeout=10) as resp:
+                    with urllib.request.urlopen(req, timeout=8) as resp:
                         data = json.loads(resp.read().decode("utf-8"))
                         text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
                         word_count = len(text.split())
@@ -348,22 +352,28 @@ Write a warm, 2-to-3 sentence personalized recommendation explaining why these s
 Mention 1 or 2 specific titles naturally in your response in bold (e.g. **Title**).
 Do not use bullet points or intros like "Here is a recommendation". Speak directly and warmly to the customer."""
 
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={api_key}"
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "temperature": 0.4,
-                    "maxOutputTokens": 200
-                }
-            }
-            req = urllib.request.Request(
-                url,
-                data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
-            )
-            with urllib.request.urlopen(req, timeout=3.5) as resp:
-                gdata = json.loads(resp.read().decode("utf-8"))
-                answer_text = gdata["candidates"][0]["content"]["parts"][0]["text"].strip()
+            for model_name in ["gemini-3.5-flash-lite", "gemini-3.5-flash"]:
+                try:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+                    payload = {
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {
+                            "temperature": 0.4,
+                            "maxOutputTokens": 200
+                        }
+                    }
+                    req = urllib.request.Request(
+                        url,
+                        data=json.dumps(payload).encode("utf-8"),
+                        headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
+                    )
+                    with urllib.request.urlopen(req, timeout=4.5) as resp:
+                        gdata = json.loads(resp.read().decode("utf-8"))
+                        answer_text = gdata["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        if answer_text:
+                            break
+                except Exception:
+                    continue
         except Exception as e:
             print(f"Gemini fast advisor notice: {e}")
 
