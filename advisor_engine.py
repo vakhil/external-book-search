@@ -177,6 +177,7 @@ Rules:
 - Focus entirely on the book itself.
 - Write in clear, elegant, fluid paragraphs."""
 
+            _last_err = ""
             for model_name in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]:
                 try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
@@ -200,13 +201,17 @@ Rules:
                         if word_count >= 130:
                             hybrid_summary = text
                             break
-                except Exception:
+                except Exception as ex:
+                    _last_err = f"{model_name}: {ex}"
                     continue
         except Exception as e:
+            _last_err = f"outer: {e}"
             print(f"Notice generating 150-400 word synopsis: {e}")
 
     # Fallback to base summary if model is offline
     final_summary = hybrid_summary or base_summary
+    if not hybrid_summary and _last_err:
+        final_summary = f"[DEBUG_ERR: {_last_err}] " + final_summary
 
     # Cache in RAM only; do NOT write or mutate database
     if final_summary and clean_t:
