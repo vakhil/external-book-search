@@ -3028,71 +3028,12 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
         except Exception:
             pass
 
-    # Step 4: Try direct Wikipedia REST summary API
-    if not summary_text and clean_title:
-        try:
-            slug = urllib.parse.quote(clean_title.replace(" ", "_"))
-            wiki_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{slug}"
-            req = urllib.request.Request(wiki_url, headers=req_headers)
-            with urllib.request.urlopen(req, timeout=3.0) as resp:
-                data = json.loads(resp.read().decode("utf-8", errors="replace"))
-                extract = data.get("extract", "")
-                if extract and not _is_invalid_summary(extract):
-                    summary_text = extract.strip()
-        except Exception:
-            pass
-
-    # Step 5: Try Wikipedia Search with '(book)' / '(novel)' qualifier
-    if not summary_text and clean_title:
-        search_queries = [
-            f'"{clean_title}" {clean_author} book'.strip(),
-            f'"{clean_title}" (book)',
-            f'"{clean_title}" (novel)'
-        ]
-        non_book_indicators = [
-            "(game)", "(video game)", "(film)", "(soundtrack)", "(album)", "(song)",
-            "(tv series)", "(season", "(episode", "bandai namco", "nintendo", "playstation", "xbox"
-        ]
-        clean_words = set(w for w in clean_title.lower().split() if len(w) > 3)
-
-        for sq in search_queries:
-            try:
-                q = urllib.parse.quote(sq)
-                search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={q}&format=json&utf8="
-                req = urllib.request.Request(search_url, headers=req_headers)
-                with urllib.request.urlopen(req, timeout=3.0) as resp:
-                    data = json.loads(resp.read().decode("utf-8", errors="replace"))
-                    results = data.get("query", {}).get("search", [])
-                    if results:
-                        for item in results[:3]:
-                            found_page = item.get("title", "")
-                            fp_low = found_page.lower()
-                            # Disqualify video games, movies, and unverified titles
-                            if any(nb in fp_low for nb in non_book_indicators):
-                                continue
-                            if clean_words and not any(w in fp_low for w in clean_words):
-                                continue
-
-                            fslug = urllib.parse.quote(found_page.replace(" ", "_"))
-                            furl = f"https://en.wikipedia.org/api/rest_v1/page/summary/{fslug}"
-                            freq = urllib.request.Request(furl, headers=req_headers)
-                            with urllib.request.urlopen(freq, timeout=3.0) as fresp:
-                                fdata = json.loads(fresp.read().decode("utf-8", errors="replace"))
-                                fext = fdata.get("extract", "")
-                                if fext and not _is_invalid_summary(fext):
-                                    summary_text = fext.strip()
-                                    break
-                        if summary_text:
-                            break
-            except Exception:
-                pass
-
-    # Step 5: High-quality contextual fallback synopsis
+    # Step 4: Contextual fallback synopsis
     if not summary_text:
         author_phrase = f"by {clean_author}" if clean_author else "from curated collections"
         summary_text = f'"{clean_title}" {author_phrase} is a featured work in the Bookmark collection. Explore its chapters and themes to discover valuable insights and literary narrative.'
 
-    # Step 6: Do not persist to database; return live fetched synopsis directly
+    # Step 5: Do not persist to database; return live fetched synopsis directly
     return summary_text
 
 def get_random_empty_locations(count: int = 1, exclude_locations: Optional[List[Tuple[int, int, int]]] = None) -> List[Dict[str, int]]:
