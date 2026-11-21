@@ -2920,7 +2920,7 @@ def get_or_fetch_book_summary(title: str, author: str = "", book_id: str = "") -
         return ""
 
     def _is_invalid_summary(txt: str) -> bool:
-        if not txt or len(txt.strip().split()) < 140:
+        if not txt or len(txt.strip().split()) < 30:
             return True
         low = txt.lower().strip()
         first_35 = " ".join(low.split()[:35])

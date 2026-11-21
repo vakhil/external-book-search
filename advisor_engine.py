@@ -208,10 +208,8 @@ Rules:
             _last_err = f"outer: {e}"
             print(f"Notice generating 150-400 word synopsis: {e}")
 
-    # Fallback to base summary if model is offline
+    # Fallback to base summary if model is offline or key is revoked
     final_summary = hybrid_summary or base_summary
-    if not hybrid_summary and _last_err:
-        final_summary = f"[DEBUG_ERR: {_last_err}] " + final_summary
 
     # Cache in RAM only; do NOT write or mutate database
     if final_summary and clean_t:
