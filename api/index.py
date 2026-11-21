@@ -99,7 +99,7 @@ def _app_dispatch(environ, start_response):
             include_sold = query_params.get("include_sold", ["false"])[0].lower() in ("true", "1")
             limit = int(query_params.get("limit", [80])[0])
             results = search_engine.search_books(q, search_type=stype, include_sold=include_sold, limit=limit)
-            return json_response(start_response, results, cache_control="public, max-age=15, s-maxage=30, stale-while-revalidate=60")
+            return json_response(start_response, results, cache_control="public, max-age=300, s-maxage=3600, stale-while-revalidate=86400")
 
         elif path == "/api/genres":
             dist = database.get_genre_distribution()

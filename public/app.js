@@ -166,7 +166,7 @@ function initSearch() {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
       performSearch(val);
-    }, 120);
+    }, 40);
   });
 
   // Enter key trigger
