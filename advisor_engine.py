@@ -211,7 +211,7 @@ Rules:
     # Fallback to base summary if model is offline or key is revoked
     final_summary = hybrid_summary or base_summary
 
-    # Cache in RAM only; do NOT write or mutate database
+    # Cache in RAM and persist to database so subsequent requests are instant
     if final_summary and clean_t:
         with _CACHE_LOCK:
             _SUMMARIES_CACHE[nt] = {
@@ -219,6 +219,24 @@ Rules:
                 "author": clean_a,
                 "summary": final_summary
             }
+        try:
+            with database.db_lock:
+                conn = database.get_db_connection()
+                cursor = conn.cursor()
+                if clean_t:
+                    cursor.execute(
+                        "UPDATE books SET summary = ? WHERE lower(title) = ? AND (summary IS NULL OR summary = '')",
+                        (final_summary, clean_t.lower())
+                    )
+                if clean_bid:
+                    cursor.execute(
+                        "UPDATE books SET summary = ? WHERE book_id = ? AND (summary IS NULL OR summary = '')",
+                        (final_summary, clean_bid)
+                    )
+                conn.commit()
+                conn.close()
+        except Exception as e:
+            print(f"Notice persisting lazy-fetched summary to DB: {e}")
 
     return final_summary
 
