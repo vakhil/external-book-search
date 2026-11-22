@@ -868,3 +868,84 @@ def ask_recommendations(question: str, top_n: int = 30) -> Dict[str, Any]:
         "books": grouped_books,
         "total_matches": len(grouped_books)
     }
+
+def get_genre_distribution_cached() -> List[Dict[str, Any]]:
+    """
+    Returns canonical simple genres with book counts and availability across
+    the entire inventory (both in-store copies and distributor titles).
+    """
+    books = get_all_books_cached()
+    genres: Dict[str, Dict[str, Any]] = {}
+    for b in books:
+        g = (b.get("simple_genre") or "").strip()
+        if not g:
+            continue
+        if g not in genres:
+            genres[g] = {
+                "simple_genre": g,
+                "total_copies": 0,
+                "unique_titles_set": set(),
+                "available_copies": 0,
+                "sold_copies": 0
+            }
+        genres[g]["total_copies"] += 1
+        t = (b.get("title") or "").strip().lower()
+        if t:
+            genres[g]["unique_titles_set"].add(t)
+        status = (b.get("status") or "").strip().upper()
+        if status == "AVAILABLE":
+            genres[g]["available_copies"] += 1
+        elif status == "SOLD OUT":
+            genres[g]["sold_copies"] += 1
+
+    result = []
+    for g, data in genres.items():
+        result.append({
+            "simple_genre": g,
+            "total_copies": data["total_copies"],
+            "unique_titles": len(data["unique_titles_set"]),
+            "available_copies": data["available_copies"],
+            "sold_copies": data["sold_copies"]
+        })
+
+    result.sort(key=lambda x: (0 if x["simple_genre"].lower() == "manga" else 1, -x["total_copies"]))
+    return result
+
+def get_books_by_genre_cached(genre: Any, available_only: bool = False, limit: int = 500) -> List[Dict[str, Any]]:
+    """
+    Returns grouped books classified under the given simple genre(s),
+    including both in-store copies and distributor inventory.
+    """
+    genres_list = []
+    if isinstance(genre, list):
+        genres_list = [str(g).strip().lower() for g in genre if str(g).strip()]
+    elif isinstance(genre, str):
+        if "," in genre:
+            genres_list = [g.strip().lower() for g in genre.split(",") if g.strip()]
+        elif genre.strip():
+            genres_list = [genre.strip().lower()]
+
+    if not genres_list:
+        return []
+
+    genres_set = set(genres_list)
+    books = get_all_books_cached()
+    matches = []
+
+    for b in books:
+        sg = (b.get("simple_genre") or "").strip().lower()
+        if sg in genres_set:
+            if available_only and (b.get("status") or "").strip().upper() == "SOLD OUT":
+                continue
+            matches.append(b)
+
+    # Sort matches so store copies come first before distributor copies for proper deduplication
+    matches.sort(key=lambda x: (
+        int(x.get("is_external") or 0),
+        (x.get("title") or "").lower()
+    ))
+
+    grouped = group_physical_copies(matches)
+    grouped.sort(key=lambda g: (g.get("title") or "").lower())
+    return grouped[:limit]
+

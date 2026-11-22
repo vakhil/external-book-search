@@ -105,15 +105,21 @@ def _app_dispatch(environ, start_response):
             return json_response(start_response, results, cache_control="public, max-age=300, s-maxage=3600, stale-while-revalidate=86400")
 
         elif path == "/api/genres":
-            dist = database.get_genre_distribution()
+            try:
+                dist = search_engine.get_genre_distribution_cached()
+            except Exception as e:
+                dist = database.get_genre_distribution()
             return json_response(start_response, {"genres": dist}, cache_control="public, max-age=60, s-maxage=120, stale-while-revalidate=300")
 
         elif path == "/api/books/by-genre":
             genre = query_params.get("genre", [""])[0]
             avail_only = query_params.get("available_only", ["true"])[0].lower() in ("true", "1")
             limit = int(query_params.get("limit", [500])[0])
-            raw_books = database.get_books_by_genre(genre, available_only=avail_only, limit=limit)
-            grouped = search_engine.group_physical_copies(raw_books)
+            try:
+                grouped = search_engine.get_books_by_genre_cached(genre, available_only=avail_only, limit=limit)
+            except Exception as e:
+                raw_books = database.get_books_by_genre(genre, available_only=avail_only, limit=limit)
+                grouped = search_engine.group_physical_copies(raw_books)
             return json_response(start_response, {"genre": genre, "total_books": len(grouped), "books": grouped}, cache_control="public, max-age=30, s-maxage=60, stale-while-revalidate=120")
 
         elif path == "/api/books/cover":
