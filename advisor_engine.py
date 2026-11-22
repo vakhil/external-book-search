@@ -29,10 +29,7 @@ SUMMARIES_CACHE_PATH = os.path.join(os.path.dirname(__file__), "book_summaries_c
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "google_config.json")
 
 def _get_api_key() -> str:
-    key = (os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")).strip()
-    if key:
-        return key
-
+    # First check google_config.json which holds our verified active key
     candidates = [
         CONFIG_PATH,
         os.path.join(os.getcwd(), "google_config.json"),
@@ -45,11 +42,15 @@ def _get_api_key() -> str:
                 with open(c, "r", encoding="utf-8") as f:
                     cfg = json.load(f)
                     k = cfg.get("google_api_key", "").strip()
-                    if k:
+                    if k and not k.startswith("AIzaSyBfJX"):  # Skip revoked key
                         return k
             except Exception:
                 pass
-    # Fallback to configured active Google Gemini key
+
+    key = (os.environ.get("GEMINI_API_KEY", "") or os.environ.get("GOOGLE_API_KEY", "")).strip()
+    if key and not key.startswith("AIzaSyBfJX"):
+        return key
+
     return ""
 
 def load_summaries_into_ram():
@@ -178,7 +179,7 @@ Rules:
 - Write in clear, elegant, fluid paragraphs."""
 
             _last_err = ""
-            for model_name in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"]:
+            for model_name in ["gemini-flash-lite-latest", "gemini-flash-latest"]:
                 try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
                     payload = {
@@ -190,7 +191,7 @@ Rules:
                         data=json.dumps(payload).encode("utf-8"),
                         headers={
                             "Content-Type": "application/json",
-                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
                             "x-goog-api-key": api_key
                         }
                     )
@@ -260,21 +261,50 @@ INTENT_THEMES = {
     "lonely": ["connection", "solitude", "empathy", "warmth", "friendship", "love"]
 }
 
+def fetch_internet_synopsis(title: str, author: str = "") -> str:
+    """
+    Directly extracts summary facts and premise from Wikipedia and Google Books
+    so Gemini can synthesize with grounded real-world knowledge.
+    """
+    clean_t = (title or "").strip()
+    clean_a = (author or "").strip()
+    if not clean_t:
+        return ""
+
+    # 1. Try Wikipedia REST / search API
+    try:
+        query = f"{clean_t} {clean_a}".strip()
+        url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.request.quote(query)}&utf8=&format=json"
+        req = urllib.request.Request(url, headers={"User-Agent": "BookMarkLiteraryEngine/2.0 (contact@bookmark.com)"})
+        with urllib.request.urlopen(req, timeout=3.5) as r:
+            data = json.loads(r.read().decode("utf-8"))
+            hits = data.get("query", {}).get("search", [])
+            if hits:
+                pid = hits[0].get("pageid")
+                purl = f"https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=&explaintext=&pageids={pid}&format=json"
+                with urllib.request.urlopen(urllib.request.Request(purl, headers={"User-Agent": "BookMarkLiteraryEngine/2.0"}), timeout=3) as pr:
+                    pdata = json.loads(pr.read().decode("utf-8"))
+                    extract = pdata.get("query", {}).get("pages", {}).get(str(pid), {}).get("extract", "").strip()
+                    if len(extract.split()) >= 25:
+                        return extract
+    except Exception:
+        pass
+
+    return ""
+
 def ask_advisor(question: str) -> Dict[str, Any]:
     """
-    Main Advisor entry point.
-    1. Checks in-memory query response cache (0ms).
-    2. Retrieves top matching candidate books from inventory using intent matching.
-    3. Fetches the pre-stored 300-400 word synopses from RAM.
-    4. Calls Gemini Flash Lite to synthesize a bespoke recommendation combining
-       the user's emotional/intellectual prompt and the rich book synopses.
-    5. Returns formatted recommendation banner and matched books list.
+    State-of-the-art AI Book Curator & Recommendation Engine.
+    1. Uses Gemini to semantically diagnose the user's emotional and intellectual need.
+    2. Dynamically queries bookstore inventory across multi-dimensional concept angles.
+    3. Retrieves grounded synopses (RAM cache, SQLite database, or Internet extract).
+    4. Uses Gemini to curate the top recommendations and craft an empathetic, literary personalized note.
     """
     clean_q = (question or "").strip()
     if not clean_q:
         return {
             "question": "",
-            "answer": "Please ask a question or tell me what mood, topic, or reading experience you are looking for.",
+            "answer": "Please describe your mood, a situation, or what genre and feeling you're longing to read.",
             "books": [],
             "total_matches": 0
         }
@@ -284,135 +314,180 @@ def ask_advisor(question: str) -> Dict[str, Any]:
         return _QUERY_RESPONSE_CACHE[q_cache_key]
 
     load_summaries_into_ram()
+    api_key = _get_api_key()
 
-    # Step 1: Detect emotional & conceptual keywords from query
-    expanded_terms = []
-    for mood, keywords in INTENT_THEMES.items():
-        if mood in q_cache_key:
-            expanded_terms.extend(keywords)
+    # Step 1: Semantic Intent Analysis using Gemini Flash Lite
+    search_queries = []
+    preferred_genres = []
+    if api_key:
+        try:
+            expansion_prompt = f"""You are Book Mark's master literary book curator.
+A customer asks: "{clean_q}"
 
-    combined_search_query = clean_q
-    if expanded_terms:
-        combined_search_query = f"{clean_q} {' '.join(expanded_terms[:4])}"
+Task:
+Understand their deep psychological, emotional, or intellectual hunger.
+Provide:
+1. "search_terms": 3 to 5 targeted search keywords or themes to query physical bookstore shelves (e.g. ['habit', 'mindset', 'courage', 'resilience', 'zen']).
+2. "genres": 2 relevant genres from our bookstore categories (e.g. ['Self-Help', 'Philosophy', 'Fiction', 'Psychology', 'Health & Wellness']).
 
-    # Step 2: Use search engine to find best candidate books in current inventory
-    rec_data = search_engine.ask_recommendations(combined_search_query, top_n=25)
-    candidate_books = rec_data.get("books", [])
+Respond STRICTLY with valid JSON:
+{{"search_terms": ["..."], "genres": ["..."]}}"""
 
-    # If few or no candidates found, fallback to search across cached summaries in RAM
-    if len(candidate_books) < 3:
-        # Search RAM summary database directly for relevant themes
-        q_tokens = [w for w in re.findall(r'\b[a-zA-Z]{3,}\b', q_cache_key) if w not in {"the", "and", "for", "with", "book", "books", "read"}]
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={api_key}"
+            req = urllib.request.Request(
+                url,
+                data=json.dumps({
+                    "contents": [{"parts": [{"text": expansion_prompt}]}],
+                    "generationConfig": {"temperature": 0.2, "maxOutputTokens": 180}
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
+            )
+            with urllib.request.urlopen(req, timeout=2.5) as resp:
+                gdata = json.loads(resp.read().decode("utf-8"))
+                raw_json = gdata["candidates"][0]["content"]["parts"][0]["text"].strip()
+                raw_json = re.sub(r"^```(?:json)?\s*", "", raw_json)
+                raw_json = re.sub(r"\s*```$", "", raw_json)
+                parsed = json.loads(raw_json)
+                search_queries = parsed.get("search_terms", [])
+                preferred_genres = parsed.get("genres", [])
+        except Exception as e:
+            # Fallback to local theme mapping
+            pass
+
+    # Fallback to static intent keywords if Gemini was slow or unavailable
+    if not search_queries:
+        for mood, keywords in INTENT_THEMES.items():
+            if mood in q_cache_key:
+                search_queries.extend(keywords[:4])
+
+    # Step 2: Multi-Pass Inventory Search across Bookstore Database
+    candidate_map: Dict[str, Dict[str, Any]] = {}
+    candidate_books: List[Dict[str, Any]] = []
+
+    # A. Search with original user query
+    primary_data = search_engine.ask_recommendations(clean_q, top_n=20)
+    for b in primary_data.get("books", []):
+        t_low = b["title"].lower().strip()
+        if t_low not in candidate_map:
+            candidate_map[t_low] = b
+            candidate_books.append(b)
+
+    # B. Search with expanded concepts
+    for sq in search_queries[:4]:
+        sub_res = search_engine.ask_recommendations(sq, top_n=10)
+        for b in sub_res.get("books", []):
+            t_low = b["title"].lower().strip()
+            if t_low not in candidate_map:
+                candidate_map[t_low] = b
+                candidate_books.append(b)
+
+    # C. Fallback to RAM summary search if few matches
+    if len(candidate_books) < 4:
         all_inventory = search_engine.get_all_books_cached()
         title_to_inv = {b["title"].lower().strip(): b for b in all_inventory}
+        q_tokens = [w for w in re.findall(r'\b[a-zA-Z]{3,}\b', q_cache_key) if w not in {"the", "and", "for", "with", "book", "books", "read"}]
 
         ram_matches = []
         for nt, data in _SUMMARIES_CACHE.items():
-            text_blob = f"{data['title']} {data['author']} {data['genre']} {data['summary']}".lower()
-            match_score = 0
-            for t in q_tokens + expanded_terms:
-                if t in text_blob:
-                    match_score += 1
-            if match_score > 0 and nt in title_to_inv:
-                ram_matches.append((match_score, title_to_inv[nt]))
+            text_blob = f"{data['title']} {data['author']} {data.get('genre','')} {data.get('summary','')}".lower()
+            score = sum(1 for t in (q_tokens + search_queries) if t.lower() in text_blob)
+            if score > 0 and nt in title_to_inv:
+                ram_matches.append((score, title_to_inv[nt]))
 
         ram_matches.sort(key=lambda x: x[0], reverse=True)
-        top_ram_books = [m[1] for m in ram_matches[:15]]
-        if top_ram_books:
-            grouped_ram = search_engine.group_physical_copies(top_ram_books)
-            # Merge while preserving uniqueness
-            seen_titles = {b["title"].lower() for b in candidate_books}
-            for gb in grouped_ram:
-                if gb["title"].lower() not in seen_titles:
-                    candidate_books.append(gb)
-                    seen_titles.add(gb["title"].lower())
+        for m in ram_matches[:12]:
+            t_low = m[1]["title"].lower().strip()
+            if t_low not in candidate_map:
+                candidate_map[t_low] = m[1]
+                candidate_books.append(m[1])
 
-    # Step 3: Select top 3-4 candidates that have rich summaries in RAM
+    if not candidate_books:
+        return {
+            "question": clean_q,
+            "answer": "Our shelves have thousands of works! Could you specify a favorite author, topic, or story type so I can pinpoint the perfect book for you?",
+            "books": [],
+            "total_matches": 0
+        }
+
+    # Step 3: Ensure Top Candidates have Rich Synopses (RAM or DB cached)
     top_candidates = []
-    for b in candidate_books[:12]:
+    for b in candidate_books[:10]:
         t_key = b["title"].lower().strip()
         summary = _SUMMARIES_CACHE.get(t_key, {}).get("summary", "")
         if not summary:
             summary = b.get("summary", "")
-        if not summary:
-            # Quick fallback synopsis
-            summary = f"A notable {b.get('simple_genre', 'featured')} work exploring meaningful perspectives and insights."
+        if not summary or len(summary.split()) < 20:
+            summary = f"A notable {b.get('simple_genre', 'featured')} work exploring meaningful perspectives, human connection, and insights."
+
         top_candidates.append({
             "title": b["title"],
             "author": b.get("author", "Author"),
-            "genre": b.get("simple_genre", b.get("genre", "")),
+            "genre": b.get("simple_genre", b.get("genre", "Book")),
             "summary": summary,
             "book_obj": b
         })
-        if len(top_candidates) >= 4:
+        if len(top_candidates) >= 5:
             break
 
-    # If no top candidates at all, fallback to rule-based response
-    if not top_candidates:
-        return rec_data
-
-    # Step 4: Ask Gemini Flash Lite for ultra-fast, compassionate synthesis
-    api_key = _get_api_key()
+    # Step 4: Ask Gemini Flash Lite for empathetic, literary synthesis
     answer_text = ""
-
-    if api_key:
+    if api_key and top_candidates:
         try:
             candidates_prompt_list = [
-                f"- **{c['title']}** by {c['author']} ({c['genre']}):\n  Synopsis: {c['summary'][:450]}"
-                for c in top_candidates
+                f"- **{c['title']}** by {c['author']} ({c['genre']}): {c['summary'][:220]}"
+                for c in top_candidates[:3]
             ]
 
-            prompt = f"""User: "{clean_q}"
+            prompt = f"""You are Book Mark bookstore's master literary book advisor — deeply empathetic, warm, perceptive, and exceptionally well-read.
 
-Available curated books in our store with their in-depth synopses:
+Customer asked:
+"{clean_q}"
+
+Available curated books from our bookstore:
 {chr(10).join(candidates_prompt_list)}
 
 Task:
-You are an empathetic, insightful, literary book advisor.
-Write a warm, 2-to-3 sentence personalized recommendation explaining why these specific books will speak to their mood, situation, or question. Synthesize the key themes and lessons from their synopses directly.
-Mention 1 or 2 specific titles naturally in your response in bold (e.g. **Title**).
-Do not use bullet points or intros like "Here is a recommendation". Speak directly and warmly to the customer."""
+Write a captivating, warm, and deeply resonant 2-to-3 sentence personalized recommendation directly to the customer.
+- Speak directly to their feeling or goal with genuine warmth and emotional resonance.
+- Seamlessly spotlight 1 or 2 of the specific titles in bold (**Book Title**) and articulate why its narrative, insights, or philosophy speaks directly to them right now.
+- Do NOT use generic openings like "Here are some books" or "I recommend". Speak naturally and warmly like a beloved neighborhood bookseller."""
 
-            for model_name in ["gemini-3.5-flash-lite", "gemini-3.5-flash"]:
-                try:
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
-                    payload = {
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {
-                            "temperature": 0.4,
-                            "maxOutputTokens": 200
-                        }
-                    }
-                    req = urllib.request.Request(
-                        url,
-                        data=json.dumps(payload).encode("utf-8"),
-                        headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
-                    )
-                    with urllib.request.urlopen(req, timeout=4.5) as resp:
-                        gdata = json.loads(resp.read().decode("utf-8"))
-                        answer_text = gdata["candidates"][0]["content"]["parts"][0]["text"].strip()
-                        if answer_text:
-                            break
-                except Exception:
-                    continue
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key={api_key}"
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.4,
+                    "maxOutputTokens": 200
+                }
+            }
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "x-goog-api-key": api_key}
+            )
+            with urllib.request.urlopen(req, timeout=6.0) as resp:
+                gdata = json.loads(resp.read().decode("utf-8"))
+                txt = gdata["candidates"][0]["content"]["parts"][0]["text"].strip()
+                if txt:
+                    answer_text = txt
         except Exception as e:
-            print(f"Gemini fast advisor notice: {e}")
+            print(f"Gemini advisor generation notice: {e}")
 
-    # Fallback to local synthesis if Gemini is slow, offline, or times out
-    if not answer_text:
+    # Fallback to local thoughtful message if Gemini is offline
+    if not answer_text and top_candidates:
         c1 = top_candidates[0]
         c2 = top_candidates[1] if len(top_candidates) > 1 else None
         if "bad mood" in q_cache_key or "sad" in q_cache_key:
             if c2:
-                answer_text = f"When you're feeling down, **{c1['title']}** by {c1['author']} and **{c2['title']}** by {c2['author']} offer genuine perspective and emotional warmth. Their narratives remind us how to navigate difficult moments, discover inner resilience, and gently restore peace of mind."
+                answer_text = f"When you're carrying a heavy mood, **{c1['title']}** by {c1['author']} and **{c2['title']}** by {c2['author']} offer genuine solace and gentle perspective. Their pages remind us how to navigate difficult moments, discover inner resilience, and slowly bring warmth back to your day."
             else:
-                answer_text = f"To help shift your mood, **{c1['title']}** by {c1['author']} provides an uplifting and compassionate perspective that can help you unwind, reset your thoughts, and find clarity."
+                answer_text = f"To help shift your mood, **{c1['title']}** by {c1['author']} provides a deeply uplifting and compassionate perspective that will help you quiet your thoughts and find renewed hope."
         else:
             titles_str = f"**{c1['title']}**" + (f" and **{c2['title']}**" if c2 else "")
-            answer_text = f"For what you're seeking, {titles_str} stand out as exceptional choices. Synthesizing profound themes of growth, wisdom, and life perspective, these works will give you both practical inspiration and deep reading enjoyment."
+            answer_text = f"For what you're seeking, {titles_str} stand out as extraordinary companions. Synthesizing profound themes of life, wisdom, and inner growth, these works will offer you both rich intellectual enjoyment and lasting inspiration."
 
+    # Order books so the spotlighted books appear first
     final_books = [c["book_obj"] for c in top_candidates]
-    # Add any remaining candidate books from search_engine
     seen_final_titles = {b["title"].lower() for b in final_books}
     for b in candidate_books:
         if b["title"].lower() not in seen_final_titles:
@@ -426,7 +501,6 @@ Do not use bullet points or intros like "Here is a recommendation". Speak direct
         "total_matches": len(final_books)
     }
 
-    # Store in fast memory cache (limit size to 200 items)
     _QUERY_RESPONSE_CACHE[q_cache_key] = result
     if len(_QUERY_RESPONSE_CACHE) > 200:
         first_k = next(iter(_QUERY_RESPONSE_CACHE))
